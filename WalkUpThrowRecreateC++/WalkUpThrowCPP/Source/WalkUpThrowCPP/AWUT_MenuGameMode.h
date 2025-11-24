@@ -29,7 +29,7 @@ public:
     UPROPERTY(BlueprintReadOnly)
     bool bPlayer2Joined = false;
 
-    UFUNCTION(BlueprintImplementableEvent)
+    UFUNCTION(BlueprintImplementableEvent, Category = "Menu")
     void OnPlayerJoined(int32 PlayerIndex, int32 PadIndex);
 
 protected:
