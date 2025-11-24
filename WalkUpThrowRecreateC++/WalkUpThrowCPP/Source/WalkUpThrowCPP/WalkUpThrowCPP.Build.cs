@@ -15,7 +15,8 @@ public class WalkUpThrowCPP : ModuleRules
             "Engine",
             "InputCore",
             "EnhancedInput",
-            "UMG"
+            "UMG",
+            "Paper2D"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]
