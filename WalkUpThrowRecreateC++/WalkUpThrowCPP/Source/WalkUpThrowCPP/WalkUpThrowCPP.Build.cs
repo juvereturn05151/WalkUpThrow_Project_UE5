@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class WalkUpThrowCPlusPlus : ModuleRules
+public class WalkUpThrowCPP : ModuleRules
 {
-	public WalkUpThrowCPlusPlus(ReadOnlyTargetRules Target) : base(Target)
+	public WalkUpThrowCPP(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
