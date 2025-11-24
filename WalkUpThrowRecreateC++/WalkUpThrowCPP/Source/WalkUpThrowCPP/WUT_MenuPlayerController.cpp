@@ -88,6 +88,6 @@ void AWUT_MenuPlayerController::OnMenuStartTriggered(const FInputActionValue& Va
     AWUT_MenuGameMode* MenuGM = GetWorld()->GetAuthGameMode<AWUT_MenuGameMode>();
     if (MenuGM)
     {
-        MenuGM->HandleMenuStartPressed(this);
+        //MenuGM->HandleMenuStartPressed(this);
     }
 }
