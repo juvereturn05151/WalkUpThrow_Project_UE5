@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class MyProjectEditorTarget : TargetRules
+public class WalkUpThrowCPlusPlusTarget : TargetRules
 {
-	public MyProjectEditorTarget( TargetInfo Target) : base(Target)
+	public WalkUpThrowCPlusPlusTarget(TargetInfo Target) : base(Target)
 	{
-		Type = TargetType.Editor;
+		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_5;
-		ExtraModuleNames.Add("MyProject");
+		ExtraModuleNames.Add("WalkUpThrowCPlusPlus");
 	}
 }
