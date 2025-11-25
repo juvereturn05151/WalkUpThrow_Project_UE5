@@ -83,3 +83,25 @@ struct FMoveHitProperties
     bool bKOReverseFacing = true;
 
 };
+
+USTRUCT(BlueprintType)
+struct FMoveHurtbox
+{
+    GENERATED_BODY()
+
+    // Frame range [StartFrame, EndFrame)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 StartFrame = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 EndFrame = 0;
+
+    // Local-space center offset (X/Z)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FVector2D Offset = FVector2D(0.f, 50.f);
+
+    // Half size of hurtbox
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FVector2D HalfSize = FVector2D(40.f, 60.f);
+};
+

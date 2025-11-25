@@ -706,8 +706,19 @@ void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveDa
     }
 }
 
+void AWUT_FighterPawn::ClearMoveState()
+{
+    CurrentMove = nullptr;
+    CurrentMoveFrame = 0;
+    bHasConnectedThisMove = false;
+    bInCancelWindow = false;
+    bCanCancelOnHit = false;
+    bCanCancelOnBlock = false;
+}
+
 void AWUT_FighterPawn::EnterHitstun(int32 Frames)
 {
+    ClearMoveState();
     CurrentState = EFighterState::Hitstun;
     HitstunFramesRemaining = FMath::Max(Frames, 0);
 }
@@ -770,6 +781,7 @@ void AWUT_FighterPawn::EnterWinState()
 
 void AWUT_FighterPawn::ReturnToNeutral()
 {
+    ClearMoveState();
     CurrentState = EFighterState::Neutral;
 }
 
@@ -793,6 +805,31 @@ bool AWUT_FighterPawn::IsHoldingBack() const
 void AWUT_FighterPawn::GetHurtbox(FActiveHitbox& OutBox) const
 {
     FVector Loc = GetActorLocation();
+
+    // --- 1. If in attack, and move defines hurtboxes, use those ---
+    if (CurrentMove)
+    {
+        for (const FMoveHurtbox& HB : CurrentMove->Hurtboxes)
+        {
+            if (CurrentMoveFrame >= HB.StartFrame &&
+                CurrentMoveFrame < HB.EndFrame)
+            {
+                float LocalX = HB.Offset.X * FacingDir;
+                float LocalZ = HB.Offset.Y;
+
+                float CenterX = Loc.X + LocalX;
+                float CenterZ = FloorZ + LocalZ;
+
+                OutBox.MinX = CenterX - HB.HalfSize.X;
+                OutBox.MaxX = CenterX + HB.HalfSize.X;
+                OutBox.MinZ = CenterZ - HB.HalfSize.Y;
+                OutBox.MaxZ = CenterZ + HB.HalfSize.Y;
+                return;
+            }
+        }
+    }
+
+    // --- 2. Otherwise, use default idle/walk/block hurtbox ---
     float CenterX = Loc.X + HurtboxOffset.X;
     float CenterZ = FloorZ + HurtboxOffset.Y;
 
@@ -801,6 +838,7 @@ void AWUT_FighterPawn::GetHurtbox(FActiveHitbox& OutBox) const
     OutBox.MinZ = CenterZ - HurtboxHalfSize.Y;
     OutBox.MaxZ = CenterZ + HurtboxHalfSize.Y;
 }
+
 
 void AWUT_FighterPawn::GetPushbox(FActiveHitbox& OutBox) const
 {

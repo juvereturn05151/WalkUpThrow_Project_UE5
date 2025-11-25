@@ -165,6 +165,8 @@ public:
     // Called by collision resolution when this fighter is hit
     void OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveData* MoveData, bool bWasBlocked);
 
+    void ClearMoveState();
+
 protected:
     // Facing: +1 = right, -1 = left
     int32 FacingDir = 1;

@@ -41,6 +41,9 @@ public:
     TArray<FMoveHitbox> Hitboxes;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FMoveHurtbox> Hurtboxes;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float ThrowRange = 80.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
