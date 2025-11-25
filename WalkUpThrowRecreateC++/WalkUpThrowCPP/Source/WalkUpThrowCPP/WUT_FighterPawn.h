@@ -115,6 +115,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbook* KOFlipbook;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+    UPaperFlipbook* WinFlipbook;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
     USceneComponent* VisualRoot;
 
@@ -152,6 +155,7 @@ protected:
     // Vertical physics (for KO arcs)
     bool bUseGravity = false;
     float VerticalVelocity = 0.f;
+    float HorizontalVelocityX = 0.f;
     bool bKOOnLanding = false;
 
     // Hitstun
@@ -180,12 +184,13 @@ protected:
     void TryStartCrMK();
     void TryStartHadoken();
     void TryStartThrow();
+    void EnterWinState();
 
     void StartMove(UWUT_MoveData* MoveData);
     void TickMove();
 
     void EnterHitstun(int32 Frames);
-    void EnterAirborneKO(float InitialVelocityZ);
+    void EnterAirborneKO(const FMoveHitProperties& HitProps);
     void EnterThrownKO(float InitialVelocityZ);
     void FinishKO();
     void ReturnToNeutral();

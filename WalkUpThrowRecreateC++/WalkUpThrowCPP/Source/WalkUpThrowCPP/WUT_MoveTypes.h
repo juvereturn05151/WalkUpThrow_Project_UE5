@@ -66,11 +66,20 @@ struct FMoveHitProperties
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 BlockstunFrames = 8;
 
-    // If true, this move causes an airborne KO on hit (Hadoken)
+    // If true, this move causes an airborne KO on hit (like Hadoken)
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool bAirborneKOOnHit = false;
 
     // Initial upward velocity for KO arc
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float KOInitialVelocityZ = 800.f;
+
+    // NEW: Initial horizontal velocity for KO arc
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float KOInitialVelocityX = 300.f;
+
+    // NEW: If true, X velocity gets flipped to knock opponent away
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bKOReverseFacing = true;
+
 };

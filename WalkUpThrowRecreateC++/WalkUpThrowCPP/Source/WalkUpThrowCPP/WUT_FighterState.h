@@ -15,5 +15,6 @@ enum class EFighterState : uint8
     Hitstun    UMETA(DisplayName = "Hitstun"),
     Airborne   UMETA(DisplayName = "Airborne"),
     Thrown     UMETA(DisplayName = "Thrown"),
-    KO         UMETA(DisplayName = "KO")
+    KO         UMETA(DisplayName = "KO"),
+    Win        UMETA(DisplayName = "Win")
 };

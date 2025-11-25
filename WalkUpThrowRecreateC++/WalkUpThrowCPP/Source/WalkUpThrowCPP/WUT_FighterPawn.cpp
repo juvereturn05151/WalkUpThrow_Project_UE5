@@ -218,11 +218,22 @@ void AWUT_FighterPawn::ApplyVerticalMovement(float DeltaSeconds)
     if (!bUseGravity)
         return;
 
+    // Gravity affects vertical velocity
     VerticalVelocity += Gravity * DeltaSeconds;
 
     FVector Loc = GetActorLocation();
+
+    // Apply horizontal KO / thrown movement along X
+    if (CurrentState == EFighterState::Airborne ||
+        CurrentState == EFighterState::Thrown)
+    {
+        Loc.X += HorizontalVelocityX * DeltaSeconds;
+    }
+
+    // Apply vertical movement
     Loc.Z += VerticalVelocity * DeltaSeconds;
 
+    // Check landing
     if (Loc.Z <= FloorZ)
     {
         Loc.Z = FloorZ;
@@ -230,6 +241,7 @@ void AWUT_FighterPawn::ApplyVerticalMovement(float DeltaSeconds)
 
         bUseGravity = false;
         VerticalVelocity = 0.f;
+        HorizontalVelocityX = 0.f; // stop sliding on ground
 
         if (bKOOnLanding)
         {
@@ -245,6 +257,7 @@ void AWUT_FighterPawn::ApplyVerticalMovement(float DeltaSeconds)
 
     SetActorLocation(Loc);
 }
+
 
 // --- Move execution / cancel ---
 
@@ -488,7 +501,7 @@ void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveDa
     if (MoveData->HitProps.bAirborneKOOnHit)
     {
         // Hadoken or similar
-        EnterAirborneKO(MoveData->HitProps.KOInitialVelocityZ);
+        EnterAirborneKO(MoveData->HitProps);
     }
     else
     {
@@ -515,12 +528,25 @@ void AWUT_FighterPawn::EnterHitstun(int32 Frames)
 }
 
 // KO via air (Hadoken)
-void AWUT_FighterPawn::EnterAirborneKO(float InitialVelocityZ)
+void AWUT_FighterPawn::EnterAirborneKO(const FMoveHitProperties& HitProps)
 {
     CurrentState = EFighterState::Airborne;
     bUseGravity = true;
-    VerticalVelocity = InitialVelocityZ;
+
+    // Vertical launch
+    VerticalVelocity = HitProps.KOInitialVelocityZ;
+
+    // Horizontal launch:
+    // "back of itself" = opposite of victim's facing direction.
+    // FacingDir: +1 = facing right, -1 = facing left.
+    int32 BackDir = -FacingDir;
+
+    HorizontalVelocityX = HitProps.KOInitialVelocityX * BackDir;
+
     bKOOnLanding = true;
+
+    UE_LOG(LogTemp, Log, TEXT("%s EnterAirborneKO: VelX=%f VelZ=%f (FacingDir=%d)"),
+        *GetName(), HorizontalVelocityX, VerticalVelocity, FacingDir);
 }
 
 // KO via throw
@@ -539,6 +565,22 @@ void AWUT_FighterPawn::FinishKO()
     VerticalVelocity = 0.f;
 
     UE_LOG(LogTemp, Log, TEXT("%s KO'd"), *GetName());
+
+    // ---- NEW: Tell opponent to enter Win state ----
+    if (Opponent && Opponent->CurrentState != EFighterState::KO)
+    {
+        Opponent->EnterWinState();
+    }
+}
+
+void AWUT_FighterPawn::EnterWinState() 
+{
+    UE_LOG(LogTemp, Warning, TEXT("%s WON THE ROUND!"), *GetName());
+
+    CurrentState = EFighterState::Win;
+    bUseGravity = false;
+    VerticalVelocity = 0.f;
+    HorizontalVelocityX = 0.f;
 }
 
 void AWUT_FighterPawn::ReturnToNeutral()
@@ -669,6 +711,9 @@ void AWUT_FighterPawn::UpdateAnimation()
     case EFighterState::KO:
         Desired = KOFlipbook;
         break;
+    case EFighterState::Win:
+        Desired = WinFlipbook;
+        break;
     default:
         Desired = IdleFlipbook;
         break;
@@ -677,6 +722,22 @@ void AWUT_FighterPawn::UpdateAnimation()
     if (Desired && Sprite->GetFlipbook() != Desired)
     {
         Sprite->SetFlipbook(Desired);
+
+        // Stop looping for specific animations
+        if (Desired == CrMKFlipbook ||
+            Desired == HadokenFlipbook ||
+            Desired == AirborneFlipbook ||
+            Desired == WinFlipbook
+            Desired == KOFlipbook ||
+            Desired == ThrowFlipbook)
+        {
+            Sprite->SetLooping(false);   // freeze on last frame
+        }
+        else
+        {
+            Sprite->SetLooping(true);    // idle/walk/block loop
+        }
+
         Sprite->Play();
     }
 }
