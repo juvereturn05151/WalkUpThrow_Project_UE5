@@ -94,6 +94,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Pushbox")
     FVector2D PushboxHalfSize = FVector2D(40.f, 50.f);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stage")
+    float StageLeftX = -800.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stage")
+    float StageRightX = 800.f;
+
     // Paper2D sprite + flipbooks
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbookComponent* Sprite;

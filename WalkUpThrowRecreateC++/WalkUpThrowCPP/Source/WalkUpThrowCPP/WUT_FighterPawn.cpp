@@ -120,6 +120,7 @@ void AWUT_FighterPawn::UpdateFacing()
 
 void AWUT_FighterPawn::HandleGroundMovement(float DeltaSeconds)
 {
+    // ------------------ 1. Only movable in these states ------------------
     if (CurrentState != EFighterState::Neutral &&
         CurrentState != EFighterState::Walking &&
         CurrentState != EFighterState::Blocking)
@@ -129,6 +130,7 @@ void AWUT_FighterPawn::HandleGroundMovement(float DeltaSeconds)
     Loc.Y = 0.f;
     Loc.Z = FloorZ;
 
+    // ------------------ 2. Apply player movement ------------------
     if (FMath::Abs(InputX) > 0.2f && CurrentState != EFighterState::Blocking)
     {
         CurrentState = EFighterState::Walking;
@@ -139,9 +141,11 @@ void AWUT_FighterPawn::HandleGroundMovement(float DeltaSeconds)
         CurrentState = EFighterState::Neutral;
     }
 
+    // ------------------ 3. Clamp to stage borders BEFORE resolving pushbox ------------------
+    Loc.X = FMath::Clamp(Loc.X, StageLeftX, StageRightX);
     SetActorLocation(Loc);
 
-    // ==================== PUSHBOX RESOLUTION ====================
+    // ------------------ 4. PUSHBOX RESOLUTION ------------------
     if (Opponent &&
         CurrentState != EFighterState::Airborne &&
         CurrentState != EFighterState::BeingThrown &&
@@ -159,15 +163,15 @@ void AWUT_FighterPawn::HandleGroundMovement(float DeltaSeconds)
 
         if (bOverlap)
         {
-            // Compute centers
+            // --- get centers ---
             float CenterA = (A.MinX + A.MaxX) * 0.5f;
             float CenterB = (B.MinX + B.MaxX) * 0.5f;
 
-            // Compute half-widths
+            // --- half widths ---
             float HalfA = (A.MaxX - A.MinX) * 0.5f;
             float HalfB = (B.MaxX - B.MinX) * 0.5f;
 
-            // Compute penetration
+            // --- penetration amount ---
             float Separation = HalfA + HalfB;
             float Actual = FMath::Abs(CenterA - CenterB);
             float Penetration = Separation - Actual;
@@ -175,21 +179,52 @@ void AWUT_FighterPawn::HandleGroundMovement(float DeltaSeconds)
             if (Penetration > 0.f)
             {
                 float Direction = (CenterA < CenterB) ? -1.f : 1.f;
-                float Push = (Penetration * 0.5f) * Direction;
 
-                // Move this fighter
-                Loc = GetActorLocation();
-                Loc.X += Push;
-                SetActorLocation(Loc);
+                // ------------------ NEW: wall-aware push distribution ------------------
+                float ThisPush = Penetration * 0.5f * Direction;
+                float OtherPush = -ThisPush;
 
-                // Move opponent opposite direction
-                FVector OtherLoc = Opponent->GetActorLocation();
-                OtherLoc.X -= Push;
-                Opponent->SetActorLocation(OtherLoc);
+                FVector SelfLoc = GetActorLocation();
+                FVector OppLoc = Opponent->GetActorLocation();
+
+                // If **this** fighter is cornered, push the opponent only
+                bool bSelfCornered =
+                    (SelfLoc.X <= StageLeftX + 1.f) ||
+                    (SelfLoc.X >= StageRightX - 1.f);
+
+                bool bOpponentCornered =
+                    (OppLoc.X <= StageLeftX + 1.f) ||
+                    (OppLoc.X >= StageRightX - 1.f);
+
+                if (bSelfCornered && !bOpponentCornered)
+                {
+                    // Only push the opponent away
+                    OppLoc.X += (Penetration * Direction * -1.f);
+                }
+                else if (bOpponentCornered && !bSelfCornered)
+                {
+                    // Only push this fighter away
+                    SelfLoc.X += (Penetration * Direction);
+                }
+                else
+                {
+                    // Normal mutual pushback
+                    SelfLoc.X += ThisPush;
+                    OppLoc.X += OtherPush;
+                }
+
+                // ------------------ Clamp to stage borders ------------------
+                SelfLoc.X = FMath::Clamp(SelfLoc.X, StageLeftX, StageRightX);
+                OppLoc.X = FMath::Clamp(OppLoc.X, StageLeftX, StageRightX);
+
+                // Apply results
+                SetActorLocation(SelfLoc);
+                Opponent->SetActorLocation(OppLoc);
             }
         }
     }
 }
+
 
 void AWUT_FighterPawn::HandleState(float DeltaSeconds)
 {
