@@ -61,6 +61,17 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "Fighter")
     EFighterState CurrentState = EFighterState::Neutral;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    int32 Health = 3;
+
+    UFUNCTION(BlueprintCallable)
+    void LoseHealth();
+
+    void CheckWinAnimationFinished();
+
+    UFUNCTION(BlueprintCallable)
+    bool IsStartPressed() const;
+
     // 2D movement config
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Config")
     float MoveSpeed = 350.f;

@@ -6,6 +6,9 @@
 #include "WUT_MoveData.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "Blueprint/UserWidget.h" 
+#include "Kismet/GameplayStatics.h"
+#include "WUT_HealthUI.h"
 
 AWUT_GameplayGameMode::AWUT_GameplayGameMode()
 {
@@ -16,12 +19,58 @@ void AWUT_GameplayGameMode::BeginPlay()
 {
     Super::BeginPlay();
     SpawnFighters();
+
+    if (HealthUIClass)
+    {
+        HealthUI = CreateWidget<UWUT_HealthUI>(GetWorld(), HealthUIClass);
+        if (HealthUI)
+        {
+            HealthUI->AddToViewport();
+        }
+    }
 }
 
 void AWUT_GameplayGameMode::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     CheckCollisions();
+
+    if (!bGameOver)
+        return;
+
+    // Check if either player presses Start
+    for (AWUT_FighterPawn* Fighter : Fighters)
+    {
+        if (Fighter && Fighter->IsStartPressed())
+        {
+            UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()));
+        }
+    }
+}
+
+void AWUT_GameplayGameMode::HandleGameOver(AWUT_FighterPawn* Loser)
+{
+    if (bGameOver)
+        return;
+
+    bGameOver = true;
+
+    // Show GameOver UI
+    if (GameOverWidgetClass)
+    {
+        GameOverWidget = CreateWidget<UUserWidget>(GetWorld(), GameOverWidgetClass);
+        if (GameOverWidget)
+        {
+            GameOverWidget->AddToViewport();
+        }
+    }
+
+    // Freeze fighters
+    for (AWUT_FighterPawn* Fighter : Fighters)
+    {
+        if (Fighter)
+            Fighter->DisableInput(nullptr);
+    }
 }
 
 void AWUT_GameplayGameMode::SpawnFighters()
@@ -161,4 +210,15 @@ void AWUT_GameplayGameMode::CheckHitPair(AWUT_FighterPawn* Attacker, AWUT_Fighte
         bBlocked ? TEXT("hit-blocked") : TEXT("hit"),
         *Defender->GetName(),
         *Move->MoveName.ToString());
+}
+
+void AWUT_GameplayGameMode::UpdateHealthUI()
+{
+    if (!HealthUI) return;
+
+    if (Fighters.Num() == 2)
+    {
+        HealthUI->SetPlayerHealth(0, Fighters[0]->Health);
+        HealthUI->SetPlayerHealth(1, Fighters[1]->Health);
+    }
 }

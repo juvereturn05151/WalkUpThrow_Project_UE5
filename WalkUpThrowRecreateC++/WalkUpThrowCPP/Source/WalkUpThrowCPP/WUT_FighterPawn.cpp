@@ -6,6 +6,7 @@
 #include "PaperFlipbook.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "AWUT_GameplayGameMode.h"
 
 #if PLATFORM_WINDOWS
 #include "Windows/AllowWindowsPlatformTypes.h"
@@ -61,10 +62,62 @@ void AWUT_FighterPawn::Tick(float DeltaSeconds)
     ApplyVerticalMovement(DeltaSeconds);
     UpdateAnimation();
 
+    CheckWinAnimationFinished();
+
     DrawHitboxes();
     DrawHurtbox();
     DrawWorkingDirection();
     DrawPushbox();
+}
+
+void AWUT_FighterPawn::LoseHealth()
+{
+    Health = FMath::Max(0, Health - 1);
+
+
+    if (AWUT_GameplayGameMode* GM = GetWorld()->GetAuthGameMode<AWUT_GameplayGameMode>())
+    {
+        GM->UpdateHealthUI();
+
+        if (Health <= 0)
+        {
+            GM->HandleGameOver(this);
+        }
+    }
+
+}
+
+void AWUT_FighterPawn::CheckWinAnimationFinished()
+{
+    if (CurrentState != EFighterState::Win || !Sprite || !Sprite->GetFlipbook())
+        return;
+
+    UPaperFlipbook* FB = Sprite->GetFlipbook();
+
+    // Only for non-looping flipbooks
+    if (Sprite->IsLooping())
+        return;
+
+    const int32 LastFrame = FB->GetNumFrames() - 1;
+    const int32 CurrentFrame = Sprite->GetPlaybackPositionInFrames();
+
+    if (CurrentFrame >= LastFrame)
+    {
+        // Opponent loses a life
+        if (Opponent)
+        {
+            Opponent->LoseHealth();
+        }
+
+        // Prevent double-triggering
+        CurrentState = EFighterState::Neutral;
+    }
+}
+
+
+bool AWUT_FighterPawn::IsStartPressed() const
+{
+    return bStartPressed;
 }
 
 // --- Input ---
