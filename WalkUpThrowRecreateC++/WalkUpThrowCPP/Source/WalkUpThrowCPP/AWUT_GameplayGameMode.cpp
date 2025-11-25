@@ -9,6 +9,7 @@
 #include "Blueprint/UserWidget.h" 
 #include "Kismet/GameplayStatics.h"
 #include "WUT_HealthUI.h"
+#include "WUT_RoundUI.h"
 
 AWUT_GameplayGameMode::AWUT_GameplayGameMode()
 {
@@ -28,6 +29,18 @@ void AWUT_GameplayGameMode::BeginPlay()
             HealthUI->AddToViewport();
         }
     }
+
+
+    if (RoundUIClass)
+    {
+        RoundUI = CreateWidget<UWUT_RoundUI>(GetWorld(), RoundUIClass);
+        if (RoundUI)
+        {
+            RoundUI->AddToViewport();
+        }
+    }
+
+    ShowReadyFight();
 }
 
 void AWUT_GameplayGameMode::Tick(float DeltaSeconds)
@@ -71,6 +84,47 @@ void AWUT_GameplayGameMode::HandleGameOver(AWUT_FighterPawn* Loser)
         if (Fighter)
             Fighter->DisableInput(nullptr);
     }
+}
+
+void AWUT_GameplayGameMode::ShowReadyFight()
+{
+    // Freeze both fighters
+    for (AWUT_FighterPawn* Fighter : Fighters)
+        if (Fighter) Fighter->DisableInput(nullptr);
+
+    // UI: READY
+    if (RoundUI)
+        RoundUI->ShowReady();
+
+    // After 0.6 sec -> FIGHT
+    FTimerHandle Timer1;
+    GetWorld()->GetTimerManager().SetTimer(
+        Timer1,
+        [this]()
+        {
+            if (RoundUI)
+                RoundUI->ShowFight();
+
+            // After 0.35 sec -> hide and resume gameplay
+            FTimerHandle Timer2;
+            GetWorld()->GetTimerManager().SetTimer(
+                Timer2,
+                [this]()
+                {
+                    if (RoundUI)
+                        RoundUI->HideAll();
+
+                    // Re-enable fighters
+                    for (AWUT_FighterPawn* Fighter : Fighters)
+                        if (Fighter) Fighter->EnableInput(nullptr);
+                },
+                0.35f,
+                false
+            );
+        },
+        0.6f,
+        false
+    );
 }
 
 void AWUT_GameplayGameMode::SpawnFighters()
@@ -252,6 +306,8 @@ void AWUT_GameplayGameMode::HandleRoundReset()
         0.5f,   // freeze duration
         false
     );
+
+    ShowReadyFight();
 }
 
 void AWUT_GameplayGameMode::ResetFighter(AWUT_FighterPawn* Fighter, const FVector& NewLocation)

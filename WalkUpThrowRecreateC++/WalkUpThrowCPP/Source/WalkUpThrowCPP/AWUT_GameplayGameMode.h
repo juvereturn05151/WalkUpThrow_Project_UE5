@@ -8,6 +8,7 @@
 
 class AWUT_FighterPawn;
 class UWUT_HealthUI;
+class UWUT_RoundUI;
 
 UCLASS()
 class WALKUPTHROWCPP_API AWUT_GameplayGameMode : public AGameModeBase
@@ -45,9 +46,14 @@ protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
     TSubclassOf<UUserWidget> GameOverWidgetClass;
 
-
-
     UUserWidget* GameOverWidget = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UWUT_RoundUI> RoundUIClass;
+
+    UWUT_RoundUI* RoundUI;
+
+    void ShowReadyFight();
 
     bool bGameOver = false;
 
