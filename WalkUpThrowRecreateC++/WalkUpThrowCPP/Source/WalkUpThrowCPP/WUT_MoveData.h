@@ -39,4 +39,13 @@ public:
     // Hitboxes relative to the fighter, multiple per move
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TArray<FMoveHitbox> Hitboxes;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    float ThrowRange = 80.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    float ThrowLaunchVelocityZ = 900.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    float ThrowLaunchVelocityX = 400.f;
 };

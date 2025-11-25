@@ -161,35 +161,8 @@ void AWUT_FighterPawn::HandleState(float DeltaSeconds)
         return;
     }
 
-    if (CurrentState == EFighterState::Throwing)
-    {
-        CurrentMoveFrame++;
-
-        // Play animation if needed
-        if (Sprite->GetFlipbook() != ThrowFlipbook)
-        {
-            Sprite->SetFlipbook(ThrowFlipbook);
-            Sprite->SetLooping(false);
-            Sprite->Play();
-        }
-
-        // Trigger opponent launch at ThrowReleaseFrame
-        if (CurrentMoveFrame == ThrowReleaseFrame && Opponent)
-        {
-            Opponent->LaunchFromThrow(this);
-        }
-
-        // End of throw animation -> return to neutral
-        if (CurrentMoveFrame >= Sprite->GetFlipbookLengthInFrames())
-        {
-            CurrentState = EFighterState::Neutral;
-        }
-
-        return;
-    }
-
     // Attacking: Tick move
-    if (CurrentState == EFighterState::Attacking)
+    if (CurrentState == EFighterState::Attacking|| CurrentState == EFighterState::Grab || CurrentState == EFighterState::Throwing)
     {
         TickMove();
 
@@ -314,6 +287,36 @@ void AWUT_FighterPawn::TickMove()
         CurrentMove->ActiveFrames +
         CurrentMove->RecoveryFrames;
 
+    if (CurrentState == EFighterState::Throwing)
+    {
+        if (CurrentMoveFrame == ThrowReleaseFrame && Opponent)
+        {
+            Opponent->LaunchFromThrow(this);
+        }
+
+        if (CurrentMoveFrame >= Sprite->GetFlipbookLengthInFrames())
+        {
+            ReturnToNeutral();
+        }
+
+        return;
+    }
+
+    if (CurrentState == EFighterState::Grab)
+    {
+        if (CurrentMoveFrame == CurrentMove->StartupFrames)
+        {
+            TryGrabAttempt();
+        }
+
+        if (CurrentMoveFrame >= TotalFrames)
+        {
+            ReturnToNeutral();
+        }
+
+        return;
+    }
+
     // Simple cancel window: allow cancel during active/recovery if flagged by cancel logic
     if (CurrentMoveFrame >= TotalFrames)
     {
@@ -321,6 +324,47 @@ void AWUT_FighterPawn::TickMove()
         CurrentMoveFrame = 0;
         ReturnToNeutral();
     }
+}
+
+void AWUT_FighterPawn::TryGrabAttempt()
+{
+    float DistX = FMath::Abs(Opponent->GetActorLocation().X - GetActorLocation().X);
+
+    if (DistX <= ThrowMove->ThrowRange)
+    {
+        // SUCCESS
+        EnterThrowingState();
+        Opponent->EnterBeingThrownState(this);
+    }
+    else
+    {
+        // FAIL -> Do nothing, the Grab move will finish & go to neutral
+        UE_LOG(LogTemp, Log, TEXT("%s throw whiffed"), *GetName());
+    }
+}
+
+void AWUT_FighterPawn::EnterBeingThrownState(AWUT_FighterPawn* Thrower)
+{
+    CurrentState = EFighterState::BeingThrown;
+    CurrentMoveFrame = 0;
+
+    bUseGravity = false;
+    VerticalVelocity = 0;
+    HorizontalVelocityX = 0;
+
+    Sprite->SetFlipbook(BeingThrownFlipbook);
+    Sprite->SetLooping(false);
+    Sprite->Play();
+}
+
+void AWUT_FighterPawn::EnterThrowingState()
+{
+    CurrentState = EFighterState::Throwing;
+    CurrentMoveFrame = 0;
+
+    Sprite->SetFlipbook(ThrowingFlipbook);
+    Sprite->SetLooping(false);
+    Sprite->Play();
 }
 
 bool AWUT_FighterPawn::IsMoveActiveFrame(const UWUT_MoveData* MoveData, int32 Frame) const
@@ -413,35 +457,28 @@ void AWUT_FighterPawn::TryStartHadoken()
 {
     if (!HadokenMove)
     {
-        UE_LOG(LogTemp, Warning, TEXT("TRY HADOKEN: No HadokenMove assigned!"));
         return;
     }
-
-    UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Entered function."));
 
     // Must currently be canceling from CrMK
     if (!bInCancelWindow)
     {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Not in cancel window."));
         return;
     }
 
     if (!CurrentMove)
     {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: No CurrentMove."));
         return;
     }
 
     if (CurrentMove != CrMKMove)
     {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: CurrentMove is NOT CrMK."));
         return;
     }
 
     // Must press SAME button again
     if (!bCrMKPressed)
     {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: CrMK button was NOT pressed again."));
         return;
     }
 
@@ -451,27 +488,17 @@ void AWUT_FighterPawn::TryStartHadoken()
 
     if (bCanCancelOnHit)
     {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Checking CancelOnHit list..."));
         bAllowed = CurrentMove->CancelData.CancelOnHit.Contains(TargetName);
     }
     else if (bCanCancelOnBlock)
     {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Checking CancelOnBlock list..."));
         bAllowed = CurrentMove->CancelData.CancelOnBlock.Contains(TargetName);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Not allowed (didn't hit or block)."));
     }
 
     if (!bAllowed)
     {
-        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: MoveData cancel list does NOT allow Hadoken."));
         return;
     }
-
-    // SUCCESS
-    UE_LOG(LogTemp, Warning, TEXT("TRY HADOKEN: SUCCESS! -> Starting Hadoken"));
 
     StartMove(HadokenMove);
 
@@ -485,40 +512,19 @@ void AWUT_FighterPawn::TryStartHadoken()
 // Throw like Footsies: if in range, victim is KO with arc
 void AWUT_FighterPawn::TryStartThrow()
 {
-    if (!Opponent)
-        return;
+    if (!ThrowMove) return;
 
+    // Only allowed if neutral/walking/blocking
     if (CurrentState != EFighterState::Neutral &&
         CurrentState != EFighterState::Walking &&
         CurrentState != EFighterState::Blocking)
         return;
 
-    // Step 1: Enter Grab state
-    CurrentState = EFighterState::Grab;
-    CurrentMoveFrame = 0;
-    Sprite->SetFlipbook(TryGrabFlipbook);
-    Sprite->SetLooping(false);
-    Sprite->Play();
-
-    // Step 2: Immediate throw range check (Flow A)
-    float DistX = FMath::Abs(Opponent->GetActorLocation().X - GetActorLocation().X);
-    if (DistX <= ThrowRange)
-    {
-        // Attacker transitions to Throwing
-        CurrentState = EFighterState::Throwing;
-        CurrentMoveFrame = 0;
-
-        // Opponent transitions to BeingThrown
-        Opponent->EnterBeingThrown(this);
-
-        UE_LOG(LogTemp, Warning, TEXT("%s successfully grabbed %s"),
-            *GetName(), *Opponent->GetName());
-    }
-    else
-    {
-        UE_LOG(LogTemp, Log, TEXT("THROW WHIFFED!"));
-    }
+    // Make it behave like a move
+    StartMove(ThrowMove);
+    CurrentState = EFighterState::Grab;  // NEW
 }
+
 
 void AWUT_FighterPawn::EnterBeingThrown(AWUT_FighterPawn* Thrower)
 {
@@ -543,16 +549,17 @@ void AWUT_FighterPawn::EnterBeingThrown(AWUT_FighterPawn* Thrower)
 
 void AWUT_FighterPawn::LaunchFromThrow(AWUT_FighterPawn* Thrower)
 {
-    // Character is released and launched backward
     CurrentState = EFighterState::Airborne;
     bUseGravity = true;
 
-    VerticalVelocity = 900.f;   // Tune this
-    HorizontalVelocityX = 500.f * (-Thrower->FacingDir);
+    VerticalVelocity = ThrowMove->ThrowLaunchVelocityZ;
+    HorizontalVelocityX = ThrowMove->ThrowLaunchVelocityX * (Thrower->FacingDir);
 
-    UE_LOG(LogTemp, Warning,
-        TEXT("%s was launched from throw! VelX=%f VelZ=%f"),
-        *GetName(), HorizontalVelocityX, VerticalVelocity);
+    bKOOnLanding = true;
+
+    Sprite->SetFlipbook(AirborneFlipbook);
+    Sprite->SetLooping(false);
+    Sprite->Play();
 }
 
 // --- Cancel/Hit receive ---
@@ -788,7 +795,7 @@ void AWUT_FighterPawn::UpdateAnimation()
         break;
 
     case EFighterState::Throwing:
-        Desired = ThrowFlipbook;
+        Desired = ThrowingFlipbook;
         break;
 
     case EFighterState::BeingThrown:
@@ -816,7 +823,7 @@ void AWUT_FighterPawn::UpdateAnimation()
             Desired == KOFlipbook ||
             Desired == WinFlipbook ||
             Desired == TryGrabFlipbook ||
-            Desired == ThrowFlipbook ||
+            Desired == ThrowingFlipbook ||
             Desired == BeingThrownFlipbook)
         {
             Sprite->SetLooping(false);

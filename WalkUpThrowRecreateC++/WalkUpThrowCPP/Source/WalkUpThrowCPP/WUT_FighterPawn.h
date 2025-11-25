@@ -119,7 +119,7 @@ public:
     UPaperFlipbook* TryGrabFlipbook;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
-    UPaperFlipbook* ThrowFlipbook;
+    UPaperFlipbook* ThrowingFlipbook;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbook* BeingThrownFlipbook;
@@ -198,6 +198,9 @@ protected:
     void TryStartThrow();
     void EnterBeingThrown(AWUT_FighterPawn* Thrower);
     void LaunchFromThrow(AWUT_FighterPawn* Thrower);
+    void EnterBeingThrownState(AWUT_FighterPawn* Thrower);
+    void EnterThrowingState();
+    void TryGrabAttempt();
     void EnterWinState();
 
     void StartMove(UWUT_MoveData* MoveData);
