@@ -74,17 +74,21 @@ void AWUT_FighterPawn::LoseHealth()
 {
     Health = FMath::Max(0, Health - 1);
 
-
     if (AWUT_GameplayGameMode* GM = GetWorld()->GetAuthGameMode<AWUT_GameplayGameMode>())
     {
+        // Update UI immediately
         GM->UpdateHealthUI();
 
         if (Health <= 0)
         {
             GM->HandleGameOver(this);
         }
+        else
+        {
+            // Reset round like Footsies
+            GM->HandleRoundReset();
+        }
     }
-
 }
 
 void AWUT_FighterPawn::CheckWinAnimationFinished()
@@ -114,6 +118,13 @@ void AWUT_FighterPawn::CheckWinAnimationFinished()
     }
 }
 
+void AWUT_FighterPawn::OnRoundReset()
+{
+    ClearMoveState();
+
+    // Reset animation to idle
+    CurrentState = EFighterState::Neutral;
+}
 
 bool AWUT_FighterPawn::IsStartPressed() const
 {

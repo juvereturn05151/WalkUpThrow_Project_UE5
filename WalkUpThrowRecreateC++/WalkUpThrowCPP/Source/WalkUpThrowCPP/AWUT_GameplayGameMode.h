@@ -25,6 +25,11 @@ public:
 
     void UpdateHealthUI();
 
+    UFUNCTION(BlueprintCallable)
+    void HandleRoundReset();
+
+    void ResetFighter(AWUT_FighterPawn* Fighter, const FVector& NewLocation);
+
 protected:
     UPROPERTY(EditDefaultsOnly, Category = "Fighter")
     TSubclassOf<AWUT_FighterPawn> FighterClass;

@@ -70,6 +70,9 @@ public:
     void CheckWinAnimationFinished();
 
     UFUNCTION(BlueprintCallable)
+    void OnRoundReset();
+
+    UFUNCTION(BlueprintCallable)
     bool IsStartPressed() const;
 
     // 2D movement config

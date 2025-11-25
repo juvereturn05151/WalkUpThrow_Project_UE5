@@ -222,3 +222,47 @@ void AWUT_GameplayGameMode::UpdateHealthUI()
         HealthUI->SetPlayerHealth(1, Fighters[1]->Health);
     }
 }
+
+void AWUT_GameplayGameMode::HandleRoundReset()
+{
+    // Disable input during reset
+    for (AWUT_FighterPawn* Fighter : Fighters)
+    {
+        if (Fighter)
+            Fighter->DisableInput(nullptr);
+    }
+
+    // Respawn location like Footsies
+    FVector P1Loc(-200.f, 0.f, 0.f);
+    FVector P2Loc(+160.f, 0.f, 0.f);
+
+    ResetFighter(Fighters[0], P1Loc);
+    ResetFighter(Fighters[1], P2Loc);
+
+    // Optional: small pause (Footsies freeze)
+    FTimerHandle Timer;
+    GetWorldTimerManager().SetTimer(
+        Timer,
+        [this]()
+        {
+            // Re-enable inputs
+            for (AWUT_FighterPawn* Fighter : Fighters)
+                Fighter->EnableInput(nullptr);
+        },
+        0.5f,   // freeze duration
+        false
+    );
+}
+
+void AWUT_GameplayGameMode::ResetFighter(AWUT_FighterPawn* Fighter, const FVector& NewLocation)
+{
+    if (!Fighter) return;
+
+    // Reset position instantly
+    Fighter->SetActorLocation(NewLocation);
+    Fighter->SetActorRotation(FRotator::ZeroRotator);
+
+    // Reset movement state / custom data
+    Fighter->OnRoundReset(); // call into pawn for custom reset
+}
+
