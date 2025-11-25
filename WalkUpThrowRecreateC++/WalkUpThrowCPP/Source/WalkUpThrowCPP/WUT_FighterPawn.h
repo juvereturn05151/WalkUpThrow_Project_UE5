@@ -107,6 +107,9 @@ public:
     UPaperFlipbook* HitstunFlipbook;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+    UPaperFlipbook* AirborneFlipbook;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbook* ThrowFlipbook;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")

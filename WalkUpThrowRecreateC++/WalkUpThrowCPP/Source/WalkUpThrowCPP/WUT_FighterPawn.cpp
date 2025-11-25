@@ -661,6 +661,8 @@ void AWUT_FighterPawn::UpdateAnimation()
         Desired = HitstunFlipbook;
         break;
     case EFighterState::Airborne:
+        Desired = AirborneFlipbook;
+        break;
     case EFighterState::Thrown:
         Desired = ThrowFlipbook;
         break;
