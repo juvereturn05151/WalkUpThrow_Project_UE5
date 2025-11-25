@@ -7,6 +7,9 @@
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "AWUT_GameplayGameMode.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
+#include "Kismet/GameplayStatics.h"
 
 #if PLATFORM_WINDOWS
 #include "Windows/AllowWindowsPlatformTypes.h"
@@ -33,6 +36,10 @@ AWUT_FighterPawn::AWUT_FighterPawn()
     Sprite->SetRelativeLocation(FVector::ZeroVector);
 
     FloorZ = 0.f;
+
+    AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+    AudioComp->SetupAttachment(RootComponent);
+    AudioComp->bAutoActivate = false;
 }
 
 void AWUT_FighterPawn::BeginPlay()
@@ -687,6 +694,12 @@ void AWUT_FighterPawn::TryStartCrMK()
         CurrentState == EFighterState::Walking ||
         CurrentState == EFighterState::Blocking)
     {
+        if (SFX_Attack)
+        {
+            AudioComp->SetSound(SFX_Attack);
+            AudioComp->Play();
+        }
+
         StartMove(CrMKMove);
     }
 }
@@ -739,6 +752,12 @@ void AWUT_FighterPawn::TryStartHadoken()
         return;
     }
 
+    if (SFX_Hadoken)
+    {
+        AudioComp->SetSound(SFX_Hadoken);
+        AudioComp->Play();
+    }
+
     StartMove(HadokenMove);
 
     // Clear cancel flags to avoid double cancellation
@@ -760,6 +779,11 @@ void AWUT_FighterPawn::TryStartThrow()
         return;
 
     // Make it behave like a move
+    if (SFX_Throw)
+    {
+        AudioComp->SetSound(SFX_Throw);
+        AudioComp->Play();
+    }
     StartMove(ThrowMove);
     CurrentState = EFighterState::Grab;  // NEW
 }
@@ -810,6 +834,12 @@ void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveDa
 
     if (bWasBlocked)
     {
+        if (SFX_Block)
+        {
+            AudioComp->SetSound(SFX_Block);
+            AudioComp->Play();
+        }
+
         // Enter simple blockstun
         int32 Frames = MoveData->HitProps.BlockstunFrames;
         if (Frames > 0)
@@ -819,6 +849,14 @@ void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveDa
         // If this was CrMK and has CancelOnBlock, enable cancel window for attacker
         // (Attacker handles this; here we only manage this fighter's state.)
         return;
+    }
+    else 
+    {
+        if (SFX_Hit)
+        {
+            AudioComp->SetSound(SFX_Hit);
+            AudioComp->Play();
+        }
     }
 
     // On clean hit
@@ -865,6 +903,12 @@ void AWUT_FighterPawn::EnterHitstun(int32 Frames)
 // KO via air (Hadoken)
 void AWUT_FighterPawn::EnterAirborneKO(const FMoveHitProperties& HitProps)
 {
+    if (SFX_KO)
+    {
+        AudioComp->SetSound(SFX_KO);
+        AudioComp->Play();
+    }
+
     CurrentState = EFighterState::Airborne;
     bUseGravity = true;
 

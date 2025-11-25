@@ -31,6 +31,16 @@ public:
 
     void ResetFighter(AWUT_FighterPawn* Fighter, const FVector& NewLocation);
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UAudioComponent* AudioComp;
+
+    // ROUND SYSTEM SFX
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Ready;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Fight;
+
 protected:
     UPROPERTY(EditDefaultsOnly, Category = "Fighter")
     TSubclassOf<AWUT_FighterPawn> FighterClass;

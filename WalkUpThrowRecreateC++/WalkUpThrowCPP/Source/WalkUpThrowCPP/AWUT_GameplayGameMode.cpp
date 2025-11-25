@@ -10,10 +10,16 @@
 #include "Kismet/GameplayStatics.h"
 #include "WUT_HealthUI.h"
 #include "WUT_RoundUI.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 
 AWUT_GameplayGameMode::AWUT_GameplayGameMode()
 {
     PrimaryActorTick.bCanEverTick = true;
+
+    AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+    AudioComp->SetupAttachment(RootComponent);
+    AudioComp->bAutoActivate = false;
 }
 
 void AWUT_GameplayGameMode::BeginPlay()
@@ -94,8 +100,16 @@ void AWUT_GameplayGameMode::ShowReadyFight()
 
 
     // UI: READY
-    if (RoundUI)
+    if (RoundUI) 
+    {
         RoundUI->ShowReady();
+
+        if (SFX_Ready)
+        {
+            AudioComp->SetSound(SFX_Ready);
+            AudioComp->Play();
+        }
+    }
 
     // After 0.6 sec -> FIGHT
     FTimerHandle Timer1;
@@ -103,8 +117,16 @@ void AWUT_GameplayGameMode::ShowReadyFight()
         Timer1,
         [this]()
         {
-            if (RoundUI)
+            if (RoundUI) 
+            {
+                if (SFX_Fight)
+                {
+                    AudioComp->SetSound(SFX_Fight);
+                    AudioComp->Play();
+                }
                 RoundUI->ShowFight();
+            }
+
 
             // After 0.35 sec -> hide and resume gameplay
             FTimerHandle Timer2;

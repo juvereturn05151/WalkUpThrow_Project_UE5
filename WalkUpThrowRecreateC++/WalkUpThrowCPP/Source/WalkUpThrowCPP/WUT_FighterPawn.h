@@ -179,6 +179,30 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
     USceneComponent* VisualRoot;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UAudioComponent* AudioComp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Attack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Hadoken;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Throw;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Hit;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Block;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_KO;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* SFX_Win;
+
     // === Interface for GameMode / collision system ===
 
     // Returns all active hitboxes this frame in world space
