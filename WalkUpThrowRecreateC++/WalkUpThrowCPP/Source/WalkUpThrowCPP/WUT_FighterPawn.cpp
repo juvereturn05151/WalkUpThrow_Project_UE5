@@ -166,6 +166,12 @@ void AWUT_FighterPawn::HandleState(float DeltaSeconds)
     if (CurrentState == EFighterState::Attacking)
     {
         TickMove();
+
+        if (bCrMKPressed && CurrentMove == CrMKMove)
+        {
+            TryStartHadoken();
+        }
+
         return;
     }
 
@@ -193,11 +199,6 @@ void AWUT_FighterPawn::HandleState(float DeltaSeconds)
         if (bCrMKPressed)
         {
             TryStartCrMK();
-        }
-
-        if (bHadokenPressed)
-        {
-            TryStartHadoken();
         }
     }
 
@@ -372,32 +373,75 @@ void AWUT_FighterPawn::TryStartCrMK()
 void AWUT_FighterPawn::TryStartHadoken()
 {
     if (!HadokenMove)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("TRY HADOKEN: No HadokenMove assigned!"));
         return;
+    }
 
-    // Special cancel only: must be in cancel window & target move allowed by cancel data
-    if (!bInCancelWindow || !CurrentMove)
+    UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Entered function."));
+
+    // Must currently be canceling from CrMK
+    if (!bInCancelWindow)
+    {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Not in cancel window."));
         return;
+    }
 
+    if (!CurrentMove)
+    {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: No CurrentMove."));
+        return;
+    }
+
+    if (CurrentMove != CrMKMove)
+    {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: CurrentMove is NOT CrMK."));
+        return;
+    }
+
+    // Must press SAME button again
+    if (!bCrMKPressed)
+    {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: CrMK button was NOT pressed again."));
+        return;
+    }
+
+    // Check cancel rules
     const FName TargetName = HadokenMove->MoveName;
-
-    // Decide if we can cancel based on last hit/block
     bool bAllowed = false;
 
     if (bCanCancelOnHit)
     {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Checking CancelOnHit list..."));
         bAllowed = CurrentMove->CancelData.CancelOnHit.Contains(TargetName);
     }
     else if (bCanCancelOnBlock)
     {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Checking CancelOnBlock list..."));
         bAllowed = CurrentMove->CancelData.CancelOnBlock.Contains(TargetName);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: Not allowed (didn't hit or block)."));
     }
 
     if (!bAllowed)
+    {
+        UE_LOG(LogTemp, Log, TEXT("TRY HADOKEN: MoveData cancel list does NOT allow Hadoken."));
         return;
+    }
 
-    // Do the cancel
+    // SUCCESS
+    UE_LOG(LogTemp, Warning, TEXT("TRY HADOKEN: SUCCESS! -> Starting Hadoken"));
+
     StartMove(HadokenMove);
+
+    // Clear cancel flags to avoid double cancellation
+    bInCancelWindow = false;
+    bCanCancelOnHit = false;
+    bCanCancelOnBlock = false;
 }
+
 
 // Throw like Footsies: if in range, victim is KO with arc
 void AWUT_FighterPawn::TryStartThrow()
@@ -450,6 +494,17 @@ void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveDa
     {
         // Normal hitstun (CrMK)
         EnterHitstun(MoveData->HitProps.HitstunFrames);
+    }
+
+    // --- Cancel flags for attacker ---
+    if (MoveData->MoveName == "CrMK")
+    {
+        Attacker->bInCancelWindow = true;
+
+        if (bWasBlocked)
+            Attacker->bCanCancelOnBlock = true;
+        else
+            Attacker->bCanCancelOnHit = true;
     }
 }
 
