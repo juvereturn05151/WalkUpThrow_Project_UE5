@@ -162,6 +162,7 @@ void AWUT_GameplayGameMode::SpawnFighters()
             else 
             {
                 P1->InputDevice = EInputDeviceType::Gamepad;
+                P1->GamepadIndex = GI->Player1PadIndex;
             }
 
             if (GI->Player2PadIndex == 100)
@@ -175,6 +176,7 @@ void AWUT_GameplayGameMode::SpawnFighters()
             else
             {
                 P2->InputDevice = EInputDeviceType::Gamepad;
+                P2->GamepadIndex = GI->Player2PadIndex;
             }
 
             P1->PadIndex = GI->Player1PadIndex;
