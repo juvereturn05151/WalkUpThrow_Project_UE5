@@ -135,6 +135,18 @@ bool AWUT_FighterPawn::IsStartPressed() const
 
 void AWUT_FighterPawn::ReadPadInput()
 {
+    if (!bCanControl)
+    {
+        // Completely lock input
+        InputX = 0.f;
+        bCrMKPressed = false;
+        bThrowPressed = false;
+        bStartPressed = false;
+
+        // DO NOT UPDATE previous presses
+        return;
+    }
+
     InputX = 0.f;
     bCrMKPressed = false;
     bHadokenPressed = false;

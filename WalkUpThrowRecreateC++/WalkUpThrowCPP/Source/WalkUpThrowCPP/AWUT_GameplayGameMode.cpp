@@ -90,7 +90,8 @@ void AWUT_GameplayGameMode::ShowReadyFight()
 {
     // Freeze both fighters
     for (AWUT_FighterPawn* Fighter : Fighters)
-        if (Fighter) Fighter->DisableInput(nullptr);
+        if (Fighter) Fighter->bCanControl = false;
+
 
     // UI: READY
     if (RoundUI)
@@ -116,7 +117,7 @@ void AWUT_GameplayGameMode::ShowReadyFight()
 
                     // Re-enable fighters
                     for (AWUT_FighterPawn* Fighter : Fighters)
-                        if (Fighter) Fighter->EnableInput(nullptr);
+                        if (Fighter) Fighter->bCanControl = true;
                 },
                 0.35f,
                 false

@@ -67,6 +67,9 @@ public:
     UFUNCTION(BlueprintCallable)
     void LoseHealth();
 
+    UPROPERTY(BlueprintReadWrite)
+    bool bCanControl = true;
+
     void CheckWinAnimationFinished();
 
     UFUNCTION(BlueprintCallable)
