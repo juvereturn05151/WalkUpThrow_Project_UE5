@@ -31,7 +31,7 @@ void AWUT_GameplayGameMode::SpawnFighters()
         return;
 
     FVector P1Loc(-200.f, 0.f, 0.f);
-    FVector P2Loc(+200.f, 0.f, 0.f);
+    FVector P2Loc(+160.f, 0.f, 0.f);
     FRotator Rot = FRotator::ZeroRotator;
 
     AWUT_FighterPawn* P1 = World->SpawnActor<AWUT_FighterPawn>(FighterClass, P1Loc, Rot);
