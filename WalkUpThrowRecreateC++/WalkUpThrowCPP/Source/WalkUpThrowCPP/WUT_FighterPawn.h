@@ -87,6 +87,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fighter|Moves")
     UWUT_MoveData* ThrowMove; // optional, for future use
 
+    // Pushbox (body collision)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Pushbox")
+    FVector2D PushboxOffset = FVector2D(0.f, 50.f);
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Pushbox")
+    FVector2D PushboxHalfSize = FVector2D(40.f, 50.f);
+
     // Paper2D sprite + flipbooks
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbookComponent* Sprite;
@@ -140,6 +147,8 @@ public:
 
     // Compute world-space hurtbox for collision
     void GetHurtbox(FActiveHitbox& OutBox) const;
+
+    void GetPushbox(FActiveHitbox& OutBox) const;
 
     bool IsKO() const { return CurrentState == EFighterState::KO; }
 
@@ -217,4 +226,5 @@ protected:
 	void DrawHitboxes() const;
 	void DrawHurtbox() const;
 	void DrawWorkingDirection() const;
+    void DrawPushbox() const;
 };

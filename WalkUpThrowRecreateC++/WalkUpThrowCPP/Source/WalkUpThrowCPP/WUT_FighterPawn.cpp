@@ -64,6 +64,7 @@ void AWUT_FighterPawn::Tick(float DeltaSeconds)
     DrawHitboxes();
     DrawHurtbox();
     DrawWorkingDirection();
+    DrawPushbox();
 }
 
 // --- Input ---
@@ -139,6 +140,55 @@ void AWUT_FighterPawn::HandleGroundMovement(float DeltaSeconds)
     }
 
     SetActorLocation(Loc);
+
+    // ==================== PUSHBOX RESOLUTION ====================
+    if (Opponent &&
+        CurrentState != EFighterState::Airborne &&
+        CurrentState != EFighterState::BeingThrown &&
+        CurrentState != EFighterState::KO)
+    {
+        FActiveHitbox A, B;
+        GetPushbox(A);
+        Opponent->GetPushbox(B);
+
+        bool bOverlap =
+            !(A.MaxX < B.MinX ||
+                A.MinX > B.MaxX ||
+                A.MaxZ < B.MinZ ||
+                A.MinZ > B.MaxZ);
+
+        if (bOverlap)
+        {
+            // Compute centers
+            float CenterA = (A.MinX + A.MaxX) * 0.5f;
+            float CenterB = (B.MinX + B.MaxX) * 0.5f;
+
+            // Compute half-widths
+            float HalfA = (A.MaxX - A.MinX) * 0.5f;
+            float HalfB = (B.MaxX - B.MinX) * 0.5f;
+
+            // Compute penetration
+            float Separation = HalfA + HalfB;
+            float Actual = FMath::Abs(CenterA - CenterB);
+            float Penetration = Separation - Actual;
+
+            if (Penetration > 0.f)
+            {
+                float Direction = (CenterA < CenterB) ? -1.f : 1.f;
+                float Push = (Penetration * 0.5f) * Direction;
+
+                // Move this fighter
+                Loc = GetActorLocation();
+                Loc.X += Push;
+                SetActorLocation(Loc);
+
+                // Move opponent opposite direction
+                FVector OtherLoc = Opponent->GetActorLocation();
+                OtherLoc.X -= Push;
+                Opponent->SetActorLocation(OtherLoc);
+            }
+        }
+    }
 }
 
 void AWUT_FighterPawn::HandleState(float DeltaSeconds)
@@ -437,6 +487,21 @@ void AWUT_FighterPawn::DrawWorkingDirection() const
     );
 }
 
+void AWUT_FighterPawn::DrawPushbox() const
+{
+    FActiveHitbox PB;
+    GetPushbox(PB);
+
+    FVector Min(PB.MinX, 0.f, PB.MinZ);
+    FVector Max(PB.MaxX, 0.f, PB.MaxZ);
+
+    FVector Center = (Min + Max) * 0.5f;
+    FVector Extent = (Max - Min) * 0.5f;
+
+    DrawDebugBox(GetWorld(), Center, Extent, FColor::Yellow, false, 0.f, 0, 2.f);
+}
+
+
 // Start CrMK (Normal)
 void AWUT_FighterPawn::TryStartCrMK()
 {
@@ -700,6 +765,19 @@ void AWUT_FighterPawn::GetHurtbox(FActiveHitbox& OutBox) const
     OutBox.MaxX = CenterX + HurtboxHalfSize.X;
     OutBox.MinZ = CenterZ - HurtboxHalfSize.Y;
     OutBox.MaxZ = CenterZ + HurtboxHalfSize.Y;
+}
+
+void AWUT_FighterPawn::GetPushbox(FActiveHitbox& OutBox) const
+{
+    FVector Loc = GetActorLocation();
+
+    float CenterX = Loc.X + PushboxOffset.X;
+    float CenterZ = FloorZ + PushboxOffset.Y;
+
+    OutBox.MinX = CenterX - PushboxHalfSize.X;
+    OutBox.MaxX = CenterX + PushboxHalfSize.X;
+    OutBox.MinZ = CenterZ - PushboxHalfSize.Y;
+    OutBox.MaxZ = CenterZ + PushboxHalfSize.Y;
 }
 
 bool AWUT_FighterPawn::GetActiveHitboxes(TArray<FActiveHitbox>& OutHitboxes, const UWUT_MoveData*& OutMove) const
