@@ -72,35 +72,98 @@ void AWUT_FighterPawn::Tick(float DeltaSeconds)
 void AWUT_FighterPawn::ReadPadInput()
 {
     InputX = 0.f;
-    bCrMKPressed = bHadokenPressed = bThrowPressed = false;
+    bCrMKPressed = false;
+    bHadokenPressed = false;
+    bThrowPressed = false;
+
+    // ----------------------------------------------
+    // KEYBOARD A (WASD, J=c.MK, K=Throw, Enter=Start)
+    // ----------------------------------------------
+    if (InputDevice == EInputDeviceType::KeyboardA)
+    {
+        // Movement
+        if (IsKeyDown(EKeys::A)) InputX = -1.f;
+        if (IsKeyDown(EKeys::D)) InputX = 1.f;
+
+        // Buttons
+        bool bAtkNow = IsKeyDown(EKeys::J);
+        bool bThrowNow = IsKeyDown(EKeys::K);
+        bool bStartNow = IsKeyDown(EKeys::Enter);
+
+        bCrMKPressed = bAtkNow && !bCrMKDownPrev;
+        bThrowPressed = bThrowNow && !bThrowDownPrev;
+        bStartPressed = bStartNow && !bStartDownPrev;
+
+        bCrMKDownPrev = bAtkNow;
+        bThrowDownPrev = bThrowNow;
+        bStartDownPrev = bStartNow;
+        return;
+    }
+
+    // --------------------------------------------------
+    // KEYBOARD B (ArrowKeys, Num0=Attack, Num.=Throw)
+    // --------------------------------------------------
+    if (InputDevice == EInputDeviceType::KeyboardB)
+    {
+        if (IsKeyDown(EKeys::Left))  InputX = -1.f;
+        if (IsKeyDown(EKeys::Right)) InputX = 1.f;
+
+        bool bAtkNow = IsKeyDown(EKeys::NumPadZero);
+        bool bThrowNow = IsKeyDown(EKeys::Decimal);
+        bool bStartNow = IsKeyDown(EKeys::Add);
+
+        bCrMKPressed = bAtkNow && !bCrMKDownPrev;
+        bThrowPressed = bThrowNow && !bThrowDownPrev;
+        bStartPressed = bStartNow && !bStartDownPrev;
+
+        bCrMKDownPrev = bAtkNow;
+        bThrowDownPrev = bThrowNow;
+        bStartDownPrev = bStartNow;
+        return;
+    }
 
 #if PLATFORM_WINDOWS
-    if (PadIndex < 0)
-        return;
+    // ----------------------------------------------
+    // GAMEPAD (original code)
+    // ----------------------------------------------
+    if (InputDevice == EInputDeviceType::Gamepad && GamepadIndex >= 0)
+    {
+        XINPUT_STATE State;
+        ZeroMemory(&State, sizeof(State));
 
-    XINPUT_STATE State;
-    ZeroMemory(&State, sizeof(State));
-    DWORD Result = XInputGetState(PadIndex, &State);
-    if (Result != ERROR_SUCCESS)
-        return;
+        DWORD Result = XInputGetState(GamepadIndex, &State);
+        if (Result != ERROR_SUCCESS)
+            return;
 
-    // Left stick X
-    const float LX = State.Gamepad.sThumbLX / 32767.f;
-    if (FMath::Abs(LX) > 0.2f)
-        InputX = LX;
+        // Movement
+        const float LX = State.Gamepad.sThumbLX / 32767.f;
+        if (FMath::Abs(LX) > 0.2f)
+            InputX = LX;
 
-    bool bCrMKDownNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_A) != 0;
-    bool bHadokenDownNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_X) != 0;
-    bool bThrowDownNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_Y) != 0;
+        bool bAtkNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_A) != 0;
+        bool bThrowNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_Y) != 0;
+        bool bStartNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_START) != 0;
 
-    bCrMKPressed = bCrMKDownNow && !bCrMKDownPrev;
-    bHadokenPressed = bHadokenDownNow && !bHadokenDownPrev;
-    bThrowPressed = bThrowDownNow && !bThrowDownPrev;
+        bCrMKPressed = bAtkNow && !bCrMKDownPrev;
+        bThrowPressed = bThrowNow && !bThrowDownPrev;
+        bStartPressed = bStartNow && !bStartDownPrev;
 
-    bCrMKDownPrev = bCrMKDownNow;
-    bHadokenDownPrev = bHadokenDownNow;
-    bThrowDownPrev = bThrowDownNow;
+        bCrMKDownPrev = bAtkNow;
+        bThrowDownPrev = bThrowNow;
+        bStartDownPrev = bStartNow;
+    }
 #endif
+}
+
+
+bool AWUT_FighterPawn::IsKeyDown(FKey Key) const
+{
+    const UWorld* World = GetWorld();
+    if (!World) return false;
+    const APlayerController* PC = World->GetFirstPlayerController();
+    if (!PC) return false;
+
+    return PC->IsInputKeyDown(Key);
 }
 
 // --- Facing / movement ---

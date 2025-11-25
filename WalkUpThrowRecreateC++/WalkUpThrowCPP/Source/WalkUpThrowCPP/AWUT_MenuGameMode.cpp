@@ -42,47 +42,58 @@ void AWUT_MenuGameMode::Tick(float DeltaSeconds)
 void AWUT_MenuGameMode::CheckPadJoins()
 {
     if (!InputManager)
-    {
         return;
-    }
 
-    for (int32 PadIndex = 0; PadIndex < AWUT_InputManager::MaxPads; ++PadIndex)
+    // We loop over ALL input channels:
+    // - Gamepads: 0..MaxPads-1
+    // - Keyboard A: KeyboardAIndex
+    // - Keyboard B: KeyboardBIndex
+
+    TArray<int32> InputIndices;
+
+    // Gamepads 0..3
+    for (int32 i = 0; i < AWUT_InputManager::MaxPads; ++i)
+        InputIndices.Add(i);
+
+    // Keyboards
+    InputIndices.Add(AWUT_InputManager::KeyboardAIndex);
+    InputIndices.Add(AWUT_InputManager::KeyboardBIndex);
+
+    for (int32 PadIndex : InputIndices)
     {
-        if (!InputManager->IsPadConnected(PadIndex))
+        // ----- Skip unconnected gamepads -----
+        if (PadIndex < AWUT_InputManager::MaxPads)
         {
-            continue;
+            if (!InputManager->IsPadConnected(PadIndex))
+                continue;
         }
 
+        // ----- Check Start button input -----
         if (!InputManager->WasStartJustPressed(PadIndex))
-        {
             continue;
-        }
 
-        // Already assigned this pad?
+        // ----- Skip already assigned -----
         if (PadIndex == Player1PadIndex || PadIndex == Player2PadIndex)
-        {
             continue;
-        }
 
+        // ----- Assign Player 1 -----
         if (!bPlayer1Joined)
         {
             bPlayer1Joined = true;
             Player1PadIndex = PadIndex;
 
-            UE_LOG(LogTemp, Log, TEXT("Player 1 joined using pad %d"), PadIndex);
+            UE_LOG(LogTemp, Log, TEXT("Player 1 joined using input %d"), PadIndex);
             OnPlayerJoined(1, PadIndex);
         }
+        // ----- Assign Player 2 -----
         else if (!bPlayer2Joined)
         {
             bPlayer2Joined = true;
             Player2PadIndex = PadIndex;
 
-            UE_LOG(LogTemp, Log, TEXT("Player 2 joined using pad %d"), PadIndex);
+            UE_LOG(LogTemp, Log, TEXT("Player 2 joined using input %d"), PadIndex);
             OnPlayerJoined(2, PadIndex);
-        }
-        else
-        {
-            // both joined, ignore extra pads for now
         }
     }
 }
+

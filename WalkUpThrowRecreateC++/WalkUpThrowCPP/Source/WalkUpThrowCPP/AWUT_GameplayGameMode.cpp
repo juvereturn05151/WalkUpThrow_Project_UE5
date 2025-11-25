@@ -48,11 +48,40 @@ void AWUT_GameplayGameMode::SpawnFighters()
 
         if (UWUT_GameInstance* GI = GetGameInstance<UWUT_GameInstance>())
         {
+            if (GI->Player1PadIndex == 100)
+            {
+                P1->InputDevice = EInputDeviceType::KeyboardA;
+            }
+            else if(GI->Player1PadIndex == 101)
+            {
+                P1->InputDevice = EInputDeviceType::KeyboardB;
+            }
+            else 
+            {
+                P1->InputDevice = EInputDeviceType::Gamepad;
+            }
+
+            if (GI->Player2PadIndex == 100)
+            {
+                P2->InputDevice = EInputDeviceType::KeyboardA;
+            }
+            else if (GI->Player2PadIndex == 101)
+            {
+                P2->InputDevice = EInputDeviceType::KeyboardB;
+            }
+            else
+            {
+                P2->InputDevice = EInputDeviceType::Gamepad;
+            }
+
             P1->PadIndex = GI->Player1PadIndex;
             P2->PadIndex = GI->Player2PadIndex;
         }
         else
         {
+            P1->InputDevice = EInputDeviceType::Gamepad;
+            P2->InputDevice = EInputDeviceType::Gamepad;
+
             P1->PadIndex = 0;
             P2->PadIndex = 1;
         }

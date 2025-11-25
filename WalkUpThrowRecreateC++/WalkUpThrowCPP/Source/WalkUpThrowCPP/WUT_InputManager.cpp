@@ -41,8 +41,30 @@ void AWUT_InputManager::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    PollPads();
+#if PLATFORM_WINDOWS
+    for (int32 PadIndex = 0; PadIndex < MaxPads; ++PadIndex)
+    {
+        XINPUT_STATE State;
+        ZeroMemory(&State, sizeof(State));
+
+        DWORD Result = XInputGetState(PadIndex, &State);
+        bool bConnected = (Result == ERROR_SUCCESS);
+
+        PadConnected[PadIndex] = bConnected;
+
+        if (bConnected)
+        {
+            bool bStartPressed = (State.Gamepad.wButtons & XINPUT_GAMEPAD_START) != 0;
+            PadStartButtons[PadIndex].Update(bStartPressed);
+        }
+        else
+        {
+            PadStartButtons[PadIndex].Update(false);
+        }
+    }
+#endif
 }
+
 
 void AWUT_InputManager::PollPads()
 {
@@ -97,21 +119,36 @@ void AWUT_InputManager::PollPads()
 
 bool AWUT_InputManager::IsPadConnected(int32 PadIndex) const
 {
-    if (PadIndex < 0 || PadIndex >= MaxPads)
-    {
-        return false;
-    }
+    // XINPUT pads:
+    if (PadIndex < MaxPads)
+        return PadConnected[PadIndex];
 
-    return PadConnected[PadIndex];
+    // Keyboards always exist
+    if (PadIndex == KeyboardAIndex) return true;
+    if (PadIndex == KeyboardBIndex) return true;
+
+    return false;
 }
 
 bool AWUT_InputManager::WasStartJustPressed(int32 PadIndex) const
 {
-    if (PadIndex < 0 || PadIndex >= MaxPads)
-    {
-        return false;
-    }
+    // ---------------- GAMEPAD ----------------
+    if (PadIndex < MaxPads)
+        return PadStartButtons[PadIndex].bPressedThisFrame;
 
-    return StartJustPressed[PadIndex];
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (!PC) return false;
+
+    // ---------------- KEYBOARD A ----------------
+    if (PadIndex == KeyboardAIndex)
+        return PC->WasInputKeyJustPressed(EKeys::Enter);
+
+    // ---------------- KEYBOARD B ----------------
+    if (PadIndex == KeyboardBIndex)
+        return PC->WasInputKeyJustPressed(EKeys::Add);
+
+    return false;
 }
+
+
 

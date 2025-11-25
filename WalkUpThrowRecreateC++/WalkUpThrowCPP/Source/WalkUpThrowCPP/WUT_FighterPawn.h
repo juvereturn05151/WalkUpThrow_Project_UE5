@@ -24,6 +24,16 @@ struct FActiveHitbox
     float MinZ, MaxZ;
 };
 
+
+UENUM(BlueprintType)
+enum class EInputDeviceType : uint8
+{
+    None,
+    KeyboardA,
+    KeyboardB,
+    Gamepad
+};
+
 UCLASS()
 class WALKUPTHROWCPP_API AWUT_FighterPawn : public APawn
 {
@@ -38,6 +48,12 @@ public:
     // Assigned externally (Menu/Gameplay) to know which pad drives this fighter
     UPROPERTY(BlueprintReadWrite, Category = "Fighter")
     int32 PadIndex = -1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    EInputDeviceType InputDevice = EInputDeviceType::None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 GamepadIndex = -1; // Only used for Gamepads
 
     UPROPERTY(BlueprintReadWrite, Category = "Fighter")
     AWUT_FighterPawn* Opponent = nullptr;
@@ -180,6 +196,9 @@ protected:
     bool bCrMKDownPrev = false;
     bool bHadokenDownPrev = false;
     bool bThrowDownPrev = false;
+    bool bStartPressed = false;
+    bool bStartDownPrev = false;
+    
 
     // Vertical physics (for KO arcs)
     bool bUseGravity = false;
@@ -204,6 +223,7 @@ protected:
 
     // --- Internal helpers ---
     void ReadPadInput();
+    bool IsKeyDown(FKey Key) const;
     void UpdateFacing();
     void HandleGroundMovement(float DeltaSeconds);
     void HandleState(float DeltaSeconds);
