@@ -155,10 +155,36 @@ void AWUT_FighterPawn::HandleState(float DeltaSeconds)
     }
 
     // Airborne / thrown physics handled by gravity
-    if (CurrentState == EFighterState::Airborne ||
-        CurrentState == EFighterState::Thrown)
+    if (CurrentState == EFighterState::Airborne )
     {
         // No ground control in air
+        return;
+    }
+
+    if (CurrentState == EFighterState::Throwing)
+    {
+        CurrentMoveFrame++;
+
+        // Play animation if needed
+        if (Sprite->GetFlipbook() != ThrowFlipbook)
+        {
+            Sprite->SetFlipbook(ThrowFlipbook);
+            Sprite->SetLooping(false);
+            Sprite->Play();
+        }
+
+        // Trigger opponent launch at ThrowReleaseFrame
+        if (CurrentMoveFrame == ThrowReleaseFrame && Opponent)
+        {
+            Opponent->LaunchFromThrow(this);
+        }
+
+        // End of throw animation -> return to neutral
+        if (CurrentMoveFrame >= Sprite->GetFlipbookLengthInFrames())
+        {
+            CurrentState = EFighterState::Neutral;
+        }
+
         return;
     }
 
@@ -225,7 +251,7 @@ void AWUT_FighterPawn::ApplyVerticalMovement(float DeltaSeconds)
 
     // Apply horizontal KO / thrown movement along X
     if (CurrentState == EFighterState::Airborne ||
-        CurrentState == EFighterState::Thrown)
+        CurrentState == EFighterState::BeingThrown)
     {
         Loc.X += HorizontalVelocityX * DeltaSeconds;
     }
@@ -467,14 +493,66 @@ void AWUT_FighterPawn::TryStartThrow()
         CurrentState != EFighterState::Blocking)
         return;
 
+    // Step 1: Enter Grab state
+    CurrentState = EFighterState::Grab;
+    CurrentMoveFrame = 0;
+    Sprite->SetFlipbook(TryGrabFlipbook);
+    Sprite->SetLooping(false);
+    Sprite->Play();
+
+    // Step 2: Immediate throw range check (Flow A)
     float DistX = FMath::Abs(Opponent->GetActorLocation().X - GetActorLocation().X);
     if (DistX <= ThrowRange)
     {
-        // Attacker enters Throw state (for animation)
-        CurrentState = EFighterState::Thrown; // or a separate Throwing state if you want
-        // Victim KO arc
-        Opponent->EnterThrownKO(800.f);
+        // Attacker transitions to Throwing
+        CurrentState = EFighterState::Throwing;
+        CurrentMoveFrame = 0;
+
+        // Opponent transitions to BeingThrown
+        Opponent->EnterBeingThrown(this);
+
+        UE_LOG(LogTemp, Warning, TEXT("%s successfully grabbed %s"),
+            *GetName(), *Opponent->GetName());
     }
+    else
+    {
+        UE_LOG(LogTemp, Log, TEXT("THROW WHIFFED!"));
+    }
+}
+
+void AWUT_FighterPawn::EnterBeingThrown(AWUT_FighterPawn* Thrower)
+{
+    CurrentState = EFighterState::BeingThrown;
+    CurrentMoveFrame = 0;
+
+    // Freeze movement completely
+    bUseGravity = false;
+    VerticalVelocity = 0.f;
+    HorizontalVelocityX = 0.f;
+
+    // No player input
+    InputX = 0.f;
+
+    Sprite->SetFlipbook(BeingThrownFlipbook);
+    Sprite->SetLooping(false);
+    Sprite->Play();
+
+    UE_LOG(LogTemp, Warning, TEXT("%s is being thrown by %s"),
+        *GetName(), *Thrower->GetName());
+}
+
+void AWUT_FighterPawn::LaunchFromThrow(AWUT_FighterPawn* Thrower)
+{
+    // Character is released and launched backward
+    CurrentState = EFighterState::Airborne;
+    bUseGravity = true;
+
+    VerticalVelocity = 900.f;   // Tune this
+    HorizontalVelocityX = 500.f * (-Thrower->FacingDir);
+
+    UE_LOG(LogTemp, Warning,
+        TEXT("%s was launched from throw! VelX=%f VelZ=%f"),
+        *GetName(), HorizontalVelocityX, VerticalVelocity);
 }
 
 // --- Cancel/Hit receive ---
@@ -552,10 +630,10 @@ void AWUT_FighterPawn::EnterAirborneKO(const FMoveHitProperties& HitProps)
 // KO via throw
 void AWUT_FighterPawn::EnterThrownKO(float InitialVelocityZ)
 {
-    CurrentState = EFighterState::Thrown;
+    /*CurrentState = EFighterState::Thrown;
     bUseGravity = true;
     VerticalVelocity = InitialVelocityZ;
-    bKOOnLanding = true;
+    bKOOnLanding = true;*/
 }
 
 void AWUT_FighterPawn::FinishKO()
@@ -705,8 +783,16 @@ void AWUT_FighterPawn::UpdateAnimation()
     case EFighterState::Airborne:
         Desired = AirborneFlipbook;
         break;
-    case EFighterState::Thrown:
+    case EFighterState::Grab:
+        Desired = TryGrabFlipbook;
+        break;
+
+    case EFighterState::Throwing:
         Desired = ThrowFlipbook;
+        break;
+
+    case EFighterState::BeingThrown:
+        Desired = BeingThrownFlipbook;
         break;
     case EFighterState::KO:
         Desired = KOFlipbook;
@@ -727,15 +813,17 @@ void AWUT_FighterPawn::UpdateAnimation()
         if (Desired == CrMKFlipbook ||
             Desired == HadokenFlipbook ||
             Desired == AirborneFlipbook ||
-            Desired == WinFlipbook
             Desired == KOFlipbook ||
-            Desired == ThrowFlipbook)
+            Desired == WinFlipbook ||
+            Desired == TryGrabFlipbook ||
+            Desired == ThrowFlipbook ||
+            Desired == BeingThrownFlipbook)
         {
-            Sprite->SetLooping(false);   // freeze on last frame
+            Sprite->SetLooping(false);
         }
         else
         {
-            Sprite->SetLooping(true);    // idle/walk/block loop
+            Sprite->SetLooping(true);    // idle/walk/block loops
         }
 
         Sprite->Play();

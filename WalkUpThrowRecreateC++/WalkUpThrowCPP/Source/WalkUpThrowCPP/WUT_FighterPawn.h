@@ -62,6 +62,12 @@ public:
     // Throw range
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Throw")
     float ThrowRange = 80.f;
+    // Throw timing
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Throw")
+    int32 ThrowFreezeFrames = 20;     // Opponent locked in place
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Throw")
+    int32 ThrowReleaseFrame = 15;     // At this frame, opponent is launched
 
     // Proximity guard
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fighter|Defense")
@@ -110,7 +116,13 @@ public:
     UPaperFlipbook* AirborneFlipbook;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+    UPaperFlipbook* TryGrabFlipbook;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbook* ThrowFlipbook;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+    UPaperFlipbook* BeingThrownFlipbook;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbook* KOFlipbook;
@@ -184,6 +196,8 @@ protected:
     void TryStartCrMK();
     void TryStartHadoken();
     void TryStartThrow();
+    void EnterBeingThrown(AWUT_FighterPawn* Thrower);
+    void LaunchFromThrow(AWUT_FighterPawn* Thrower);
     void EnterWinState();
 
     void StartMove(UWUT_MoveData* MoveData);

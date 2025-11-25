@@ -14,7 +14,9 @@ enum class EFighterState : uint8
     Attacking  UMETA(DisplayName = "Attacking"),
     Hitstun    UMETA(DisplayName = "Hitstun"),
     Airborne   UMETA(DisplayName = "Airborne"),
-    Thrown     UMETA(DisplayName = "Thrown"),
+    Grab            UMETA(DisplayName = "Grab"),          // NEW (attempting to grab)
+    Throwing        UMETA(DisplayName = "Throwing"),      // NEW (performing the throw)
+    BeingThrown     UMETA(DisplayName = "BeingThrown"),   // NEW (opponent locked in throw)
     KO         UMETA(DisplayName = "KO"),
     Win        UMETA(DisplayName = "Win")
 };

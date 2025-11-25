@@ -23,7 +23,8 @@ public class WalkUpThrowCPP : ModuleRules
         {
             "Slate",
             "SlateCore",
-            "UMG"
+            "UMG",
+            "Paper2D"
         });
 
         if (Target.Platform == UnrealTargetPlatform.Win64)
