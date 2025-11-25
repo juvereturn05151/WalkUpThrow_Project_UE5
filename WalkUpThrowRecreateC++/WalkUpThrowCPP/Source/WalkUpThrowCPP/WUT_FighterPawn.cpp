@@ -17,11 +17,19 @@ AWUT_FighterPawn::AWUT_FighterPawn()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    Sprite = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("Sprite"));
-    RootComponent = Sprite;
+    // Create a proper root (SceneComponent)
+    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
-    // Move sprite locally on +X by 130 units
-    Sprite->SetRelativeLocation(FVector(130.f, 0.f, 0.f));
+    // Create a Visual parent so sprite can be offset and edited
+    VisualRoot = CreateDefaultSubobject<USceneComponent>(TEXT("VisualRoot"));
+    VisualRoot->SetupAttachment(RootComponent);
+
+    // Create sprite as a child of VisualRoot
+    Sprite = CreateDefaultSubobject<UPaperFlipbookComponent>(TEXT("Sprite"));
+    Sprite->SetupAttachment(VisualRoot);
+
+    // Default sprite offset — can be adjusted in Blueprint instead of C++
+    Sprite->SetRelativeLocation(FVector::ZeroVector);
 
     FloorZ = 0.f;
 }
@@ -52,6 +60,10 @@ void AWUT_FighterPawn::Tick(float DeltaSeconds)
     HandleState(DeltaSeconds);
     ApplyVerticalMovement(DeltaSeconds);
     UpdateAnimation();
+
+    DrawHitboxes();
+    DrawHurtbox();
+    DrawWorkingDirection();
 }
 
 // --- Input ---
@@ -279,6 +291,66 @@ bool AWUT_FighterPawn::IsMoveActiveFrame(const UWUT_MoveData* MoveData, int32 Fr
     int32 Start = MoveData->StartupFrames;
     int32 End = Start + MoveData->ActiveFrames;
     return (Frame >= Start && Frame < End);
+}
+
+void AWUT_FighterPawn::DrawHitboxes() const
+{
+    TArray<FActiveHitbox> Hitboxes;
+    const UWUT_MoveData* Move = nullptr;
+
+    if (GetActiveHitboxes(Hitboxes, Move))
+    {
+        for (const FActiveHitbox& HB : Hitboxes)
+        {
+            FVector Min(HB.MinX, 0.f, HB.MinZ);
+            FVector Max(HB.MaxX, 0.f, HB.MaxZ);
+
+            FVector Center = (Min + Max) * 0.5f;
+            FVector Extent = (Max - Min) * 0.5f;
+
+            DrawDebugBox(
+                GetWorld(),
+                Center,
+                Extent,
+                FColor::Red,
+                false, 0.f, 0, 2.f
+            );
+        }
+    }
+}
+
+void AWUT_FighterPawn::DrawHurtbox() const
+{
+    FActiveHitbox Hurt;
+    GetHurtbox(Hurt);
+
+    FVector Min(Hurt.MinX, 0.f, Hurt.MinZ);
+    FVector Max(Hurt.MaxX, 0.f, Hurt.MaxZ);
+
+    FVector Center = (Min + Max) * 0.5f;
+    FVector Extent = (Max - Min) * 0.5f;
+
+    DrawDebugBox(
+        GetWorld(),
+        Center,
+        Extent,
+        FColor::Blue,
+        false, 0.f, 0, 2.f
+    );
+}
+
+void AWUT_FighterPawn::DrawWorkingDirection() const
+{
+    FVector Start = GetActorLocation() + FVector(0, 0, 100);
+    FVector End = Start + FVector(100 * FacingDir, 0, 0);
+
+    DrawDebugLine(
+        GetWorld(),
+        Start,
+        End,
+        FColor::Green,
+        false, 0.f, 0, 3.f
+    );
 }
 
 // Start CrMK (Normal)

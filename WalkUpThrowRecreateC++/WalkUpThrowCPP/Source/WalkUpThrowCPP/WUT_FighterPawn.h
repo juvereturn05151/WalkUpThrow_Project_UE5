@@ -12,6 +12,7 @@ class UWUT_MoveData;
 class UPaperFlipbook;
 class UPaperFlipbookComponent;
 class AWUT_FighterPawn;
+class DrawDebugHelpers;
 
 USTRUCT()
 struct FActiveHitbox
@@ -111,6 +112,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbook* KOFlipbook;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
+    USceneComponent* VisualRoot;
+
     // === Interface for GameMode / collision system ===
 
     // Returns all active hitboxes this frame in world space
@@ -184,4 +188,8 @@ protected:
     void ReturnToNeutral();
 
     bool IsMoveActiveFrame(const UWUT_MoveData* MoveData, int32 Frame) const;
+
+	void DrawHitboxes() const;
+	void DrawHurtbox() const;
+	void DrawWorkingDirection() const;
 };
