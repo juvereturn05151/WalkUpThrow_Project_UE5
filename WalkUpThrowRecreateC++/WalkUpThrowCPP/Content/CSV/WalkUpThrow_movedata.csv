@@ -1,0 +1,4 @@
+Name,MoveName,Startup,Active,Recovery,Hitstun,Blockstun
+CrMk,CrMk,7,9,16,20,8
+Hadoken,Hadoken,8,4,16,10,2
+Throw,Throw,2,1,21,10,8

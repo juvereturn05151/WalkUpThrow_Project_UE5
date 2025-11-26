@@ -10,10 +10,17 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"UMG"
+				"UMG",
+"CoreUObject"
 			]
-		}
-	],
+		},
+  {
+    "Name": "WalkUpThrowCPPEditor",
+    "Type": "Editor",
+    "LoadingPhase": "Default"
+  }
+	]
+	,
 	"Plugins": [
 		{
 			"Name": "ModelingToolsEditorMode",

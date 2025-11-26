@@ -11,5 +11,6 @@ public class WalkUpThrowCPPEditorTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_5;
 		ExtraModuleNames.Add("WalkUpThrowCPP");
-	}
+        ExtraModuleNames.Add("WalkUpThrowCPPEditor"); // editor module
+    }
 }
