@@ -222,7 +222,7 @@ public:
     bool IsBlocking() const { return CurrentState == EFighterState::Blocking; }
 
     // Called by collision resolution when this fighter is hit
-    void OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveData* MoveData, bool bWasBlocked);
+    void OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveData* MoveData, bool bWasBlocked, const FVector& HitLocation);
 
     void ClearMoveState();
 

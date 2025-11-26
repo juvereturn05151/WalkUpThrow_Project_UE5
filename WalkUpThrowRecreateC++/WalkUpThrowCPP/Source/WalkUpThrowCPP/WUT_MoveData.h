@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "WUT_MoveTypes.h"
 #include "WUT_MoveData.generated.h"
 
@@ -51,4 +53,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float ThrowLaunchVelocityX = 400.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+    UNiagaraSystem* HitEffect;
 };

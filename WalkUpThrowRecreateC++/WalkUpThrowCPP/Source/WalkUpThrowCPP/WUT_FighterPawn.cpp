@@ -10,6 +10,8 @@
 #include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 
 #if PLATFORM_WINDOWS
 #include "Windows/AllowWindowsPlatformTypes.h"
@@ -831,10 +833,20 @@ void AWUT_FighterPawn::LaunchFromThrow(AWUT_FighterPawn* Thrower)
 
 // --- Cancel/Hit receive ---
 
-void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveData* MoveData, bool bWasBlocked)
+void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveData* MoveData, bool bWasBlocked, const FVector& HitLocation)
 {
     if (!MoveData || !Attacker)
         return;
+
+    // 1 Spawn particle at hit location
+    if (MoveData->HitEffect)
+    {
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+            GetWorld(),
+            MoveData->HitEffect,
+            HitLocation
+        );
+    }
 
     if (bWasBlocked)
     {

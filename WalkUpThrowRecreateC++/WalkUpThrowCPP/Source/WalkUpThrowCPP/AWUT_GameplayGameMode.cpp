@@ -242,54 +242,82 @@ void AWUT_GameplayGameMode::CheckHitPair(AWUT_FighterPawn* Attacker, AWUT_Fighte
     FActiveHitbox Hurt;
     Defender->GetHurtbox(Hurt);
 
+    // AABB overlap test
     auto Overlaps = [](const FActiveHitbox& A, const FActiveHitbox& B)
         {
             return !(A.MaxX < B.MinX || A.MinX > B.MaxX ||
                 A.MaxZ < B.MinZ || A.MinZ > B.MaxZ);
         };
 
-    bool bAnyHit = false;
+
+    bool bHitFound = false;
+    FVector HitPoint = FVector::ZeroVector;
+
     for (const FActiveHitbox& HB : Hitboxes)
     {
         if (Overlaps(HB, Hurt))
         {
-            bAnyHit = true;
-            break;
+            bHitFound = true;
+
+            // Intersection rectangle
+            float OverlapMinX = FMath::Max(HB.MinX, Hurt.MinX);
+            float OverlapMaxX = FMath::Min(HB.MaxX, Hurt.MaxX);
+
+            float OverlapMinZ = FMath::Max(HB.MinZ, Hurt.MinZ);
+            float OverlapMaxZ = FMath::Min(HB.MaxZ, Hurt.MaxZ);
+
+            // Center of the overlap region = hit position
+            float HitX = (OverlapMinX + OverlapMaxX) * 0.5f;
+            float HitZ = (OverlapMinZ + OverlapMaxZ) * 0.5f;
+
+            // Convert 2D (X,Z) to world space (Y stays from defender)
+            HitPoint = FVector(HitX, Defender->GetActorLocation().Y, HitZ);
+
+            break; // Only 1 hit per frame
         }
     }
 
-    if (!bAnyHit)
+    // No hit -> nothing to do
+    if (!bHitFound)
         return;
 
-    // Determine block
+    // ------------------------------------------------------------
+    // Determine block or clean hit
+    // ------------------------------------------------------------
+
     bool bBlocked = Defender->IsBlocking() || Defender->IsHoldingBack();
 
-    // Apply hit/block effects
-    Defender->OnHitByMove(Attacker, Move, bBlocked);
+    // ------------------------------------------------------------
+    // Notify defender of the hit, including hit position
+    // ------------------------------------------------------------
 
-    // Special-cancel: CrMK -> Hadoken on hit OR block
+    Defender->OnHitByMove(Attacker, Move, bBlocked, HitPoint);
+
+    // ------------------------------------------------------------
+    // Optional: Attacker cancel logic (CrMK example)
+    // ------------------------------------------------------------
+
     if (Move->MoveName == TEXT("CrMK"))
     {
-        // Let attacker know they can special cancel to Hadoken; we don't track full
-        // cancel state here to keep this version smaller; instead, we rely on:
-        // attacker’s MoveData.CancelData having "Hadoken" in CancelOnHit/CancelOnBlock
-        // and our TryStartHadoken() checking bCanCancelOnHit / bCanCancelOnBlock.
-        //
-        // To finish wiring this fully, you'd add friends/accessors in AWUT_FighterPawn
-        // and set bInCancelWindow + bCanCancelOnHit / bCanCancelOnBlock here.
-        //
-        // For now, you can make cancel always available during CrMK recovery and
-        // gate it simply by MoveData.CancelData lists in TryStartHadoken().
-        //
-        // (If you want, we can refine this part next.)
+        // Here you would set flags like:
+        // Attacker->bInCancelWindow = true;
+        // Attacker->bCanCancelOnHit / bCanCancelOnBlock
+        // depending on bBlocked.
     }
 
-    UE_LOG(LogTemp, Log, TEXT("%s %s %s with %s"),
+    // ------------------------------------------------------------
+    // Debug log
+    // ------------------------------------------------------------
+
+    UE_LOG(LogTemp, Log, TEXT("%s %s %s with %s at (%.1f, %.1f, %.1f)"),
         *Attacker->GetName(),
         bBlocked ? TEXT("hit-blocked") : TEXT("hit"),
         *Defender->GetName(),
-        *Move->MoveName.ToString());
+        *Move->MoveName.ToString(),
+        HitPoint.X, HitPoint.Y, HitPoint.Z
+    );
 }
+
 
 void AWUT_GameplayGameMode::UpdateHealthUI()
 {
