@@ -175,6 +175,8 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
     UPaperFlipbook* WinFlipbook;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+    UPaperFlipbook* PerfectWinFlipbook;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visual")
     USceneComponent* VisualRoot;
@@ -239,7 +241,7 @@ protected:
     bool bThrowDownPrev = false;
     bool bStartPressed = false;
     bool bStartDownPrev = false;
-    
+    bool isThrowingToWin = false;
 
     // Vertical physics (for KO arcs)
     bool bUseGravity = false;

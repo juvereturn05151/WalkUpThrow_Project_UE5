@@ -100,7 +100,7 @@ void AWUT_FighterPawn::LoseHealth()
 
 void AWUT_FighterPawn::CheckWinAnimationFinished()
 {
-    if (CurrentState != EFighterState::Win || !Sprite || !Sprite->GetFlipbook())
+    if ((CurrentState != EFighterState::Win && CurrentState != EFighterState::PerfectWin)|| !Sprite || !Sprite->GetFlipbook())
         return;
 
     UPaperFlipbook* FB = Sprite->GetFlipbook();
@@ -764,6 +764,8 @@ void AWUT_FighterPawn::TryStartHadoken()
     bInCancelWindow = false;
     bCanCancelOnHit = false;
     bCanCancelOnBlock = false;
+
+    isThrowingToWin = false;
 }
 
 
@@ -786,6 +788,8 @@ void AWUT_FighterPawn::TryStartThrow()
     }
     StartMove(ThrowMove);
     CurrentState = EFighterState::Grab;  // NEW
+
+    isThrowingToWin = true;
 }
 
 
@@ -903,12 +907,6 @@ void AWUT_FighterPawn::EnterHitstun(int32 Frames)
 // KO via air (Hadoken)
 void AWUT_FighterPawn::EnterAirborneKO(const FMoveHitProperties& HitProps)
 {
-    if (SFX_KO)
-    {
-        AudioComp->SetSound(SFX_KO);
-        AudioComp->Play();
-    }
-
     CurrentState = EFighterState::Airborne;
     bUseGravity = true;
 
@@ -939,24 +937,47 @@ void AWUT_FighterPawn::EnterThrownKO(float InitialVelocityZ)
 
 void AWUT_FighterPawn::FinishKO()
 {
+    if (SFX_KO)
+    {
+        AudioComp->SetSound(SFX_KO);
+        AudioComp->Play();
+    }
+
+
     CurrentState = EFighterState::KO;
     bUseGravity = false;
     VerticalVelocity = 0.f;
 
     UE_LOG(LogTemp, Log, TEXT("%s KO'd"), *GetName());
-
     // ---- NEW: Tell opponent to enter Win state ----
     if (Opponent && Opponent->CurrentState != EFighterState::KO)
     {
         Opponent->EnterWinState();
     }
+
 }
 
 void AWUT_FighterPawn::EnterWinState() 
 {
+    if (SFX_Win)
+    {
+        AudioComp->SetSound(SFX_Win);
+        AudioComp->Play();
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("%s WON THE ROUND!"), *GetName());
 
-    CurrentState = EFighterState::Win;
+    if (isThrowingToWin)
+    {
+        CurrentState = EFighterState::PerfectWin;
+    }
+    else 
+    {
+        CurrentState = EFighterState::Win;
+    }
+    
+
+
     bUseGravity = false;
     VerticalVelocity = 0.f;
     HorizontalVelocityX = 0.f;
@@ -1141,6 +1162,9 @@ void AWUT_FighterPawn::UpdateAnimation()
     case EFighterState::Win:
         Desired = WinFlipbook;
         break;
+    case EFighterState::PerfectWin:
+        Desired = PerfectWinFlipbook;
+        break;
     default:
         Desired = IdleFlipbook;
         break;
@@ -1156,6 +1180,7 @@ void AWUT_FighterPawn::UpdateAnimation()
             Desired == AirborneFlipbook ||
             Desired == KOFlipbook ||
             Desired == WinFlipbook ||
+            Desired == PerfectWinFlipbook ||
             Desired == TryGrabFlipbook ||
             Desired == ThrowingFlipbook ||
             Desired == BeingThrownFlipbook)

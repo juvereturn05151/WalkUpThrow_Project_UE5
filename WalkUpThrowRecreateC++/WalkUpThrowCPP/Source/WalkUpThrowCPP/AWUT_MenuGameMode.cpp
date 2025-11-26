@@ -3,6 +3,8 @@
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 
 AWUT_MenuGameMode::AWUT_MenuGameMode()
 {
@@ -12,6 +14,10 @@ AWUT_MenuGameMode::AWUT_MenuGameMode()
 void AWUT_MenuGameMode::BeginPlay()
 {
     Super::BeginPlay();
+
+    //AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+    //AudioComp->SetupAttachment(RootComponent);
+    //AudioComp->bAutoActivate = false;
 
     // Find the InputManager in the world
     InputManager = nullptr;

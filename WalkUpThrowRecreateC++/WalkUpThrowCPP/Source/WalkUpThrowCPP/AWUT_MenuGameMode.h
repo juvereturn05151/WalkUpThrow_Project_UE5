@@ -23,6 +23,12 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UAudioComponent* AudioComp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+    USoundBase* Menu_BGM;
+
     UPROPERTY(BlueprintReadOnly)
     bool bPlayer1Joined = false;
 

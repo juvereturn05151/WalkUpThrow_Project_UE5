@@ -18,5 +18,6 @@ enum class EFighterState : uint8
     Throwing        UMETA(DisplayName = "Throwing"),      // NEW (performing the throw)
     BeingThrown     UMETA(DisplayName = "BeingThrown"),   // NEW (opponent locked in throw)
     KO         UMETA(DisplayName = "KO"),
-    Win        UMETA(DisplayName = "Win")
+    Win        UMETA(DisplayName = "Win"),
+    PerfectWin        UMETA(DisplayName = "PerfectWin")
 };
