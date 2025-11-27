@@ -5,7 +5,7 @@
 #include "Misc/Paths.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "EditorAssetLibrary.h"
-#include "WalkUpThrowCPP/WUT_MoveData.h"
+#include "WalkUpThrowCPP/Public/WUT_MoveData.h"
 
 void UWUT_MoveDataImporter::ImportCSV()
 {
