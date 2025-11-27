@@ -1,12 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// (c) 2025 MyLoyalFans. All rights reserved.
 
 
 #include "WUT_InputManager.h"
-
 #include "Engine/Engine.h"
 
 #if PLATFORM_WINDOWS
-// Allow including Windows headers in Unreal
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include <Xinput.h>
 #include "Windows/HideWindowsPlatformTypes.h"
@@ -33,8 +31,6 @@ AWUT_InputManager::AWUT_InputManager()
 void AWUT_InputManager::BeginPlay()
 {
     Super::BeginPlay();
-
-    UE_LOG(LogTemp, Log, TEXT("WUT_InputManager started. Polling XInput pads..."));
 }
 
 void AWUT_InputManager::Tick(float DeltaSeconds)
@@ -113,7 +109,7 @@ void AWUT_InputManager::PollPads()
         }
     }
 #else
-    // Non-Windows: you can later implement platform-specific polling
+    
 #endif
 }
 

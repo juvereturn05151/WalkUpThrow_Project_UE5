@@ -23,7 +23,9 @@ struct FPadButtonState
     }
 };
 
-
+/*
+This Input Manager is independent from Unreal Input Manager(Or PlayerController)
+*/
 
 UCLASS()
 class WALKUPTHROWCPP_API AWUT_InputManager : public AActor
@@ -36,18 +38,15 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
 
-    // Max number of pads we support (XInput = 4)
     static const int32 MaxPads = 2;
     static constexpr int32 KeyboardAIndex = 100;
     static constexpr int32 KeyboardBIndex = 101;
 
     FPadButtonState PadStartButtons[MaxPads];
 
-    // Is pad i connected?
     UFUNCTION(BlueprintCallable, Category = "Input|WUT")
     bool IsPadConnected(int32 PadIndex) const;
 
-    // Did pad i press START this frame? (rising edge)
     UFUNCTION(BlueprintCallable, Category = "Input|WUT")
     bool WasStartJustPressed(int32 PadIndex) const;
 

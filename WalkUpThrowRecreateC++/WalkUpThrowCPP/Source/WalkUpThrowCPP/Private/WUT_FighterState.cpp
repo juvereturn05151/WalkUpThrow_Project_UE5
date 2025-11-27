@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// (c) 2025 MyLoyalFans. All rights reserved.
 
 
 #include "WUT_FighterState.h"

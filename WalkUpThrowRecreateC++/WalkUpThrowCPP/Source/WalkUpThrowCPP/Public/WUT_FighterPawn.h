@@ -34,6 +34,11 @@ enum class EInputDeviceType : uint8
     Gamepad
 };
 
+/*
+Everything related to fighers is written here
+TODO: The script here should be broken down to multiple components
+*/
+
 UCLASS()
 class WALKUPTHROWCPP_API AWUT_FighterPawn : public APawn
 {
@@ -288,7 +293,6 @@ protected:
 
     void EnterHitstun(int32 Frames);
     void EnterAirborneKO(const FMoveHitProperties& HitProps);
-    void EnterThrownKO(float InitialVelocityZ);
     void FinishKO();
     void ReturnToNeutral();
 

@@ -13,7 +13,7 @@ enum class EMoveType : uint8
     Throw    UMETA(DisplayName = "Throw")
 };
 
-// Local-space hitbox, 2D on X/Z
+// Local-space hitbox, 2D on X and Z
 USTRUCT(BlueprintType)
 struct FMoveHitbox
 {
@@ -74,11 +74,11 @@ struct FMoveHitProperties
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float KOInitialVelocityZ = 800.f;
 
-    // NEW: Initial horizontal velocity for KO arc
+    // Initial horizontal velocity for KO arc
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float KOInitialVelocityX = 300.f;
 
-    // NEW: If true, X velocity gets flipped to knock opponent away
+    // If true, X velocity gets flipped to knock opponent away
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool bKOReverseFacing = true;
 

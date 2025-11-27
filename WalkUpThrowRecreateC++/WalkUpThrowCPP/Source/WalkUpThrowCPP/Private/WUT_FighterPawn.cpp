@@ -1,4 +1,4 @@
-// WUT_FighterPawn.cpp
+// (c) 2025 MyLoyalFans. All rights reserved.
 
 #include "WUT_FighterPawn.h"
 #include "WUT_MoveData.h"
@@ -140,8 +140,9 @@ bool AWUT_FighterPawn::IsStartPressed() const
     return bStartPressed;
 }
 
+// We Configure Input Here
+// TODO: Game Input should have a separate class
 // --- Input ---
-
 void AWUT_FighterPawn::ReadPadInput()
 {
     if (!bCanControl)
@@ -252,7 +253,6 @@ bool AWUT_FighterPawn::IsKeyDown(FKey Key) const
 }
 
 // --- Facing / movement ---
-
 void AWUT_FighterPawn::UpdateFacing()
 {
     if (!Opponent)
@@ -335,7 +335,7 @@ void AWUT_FighterPawn::HandleGroundMovement(float DeltaSeconds)
                 FVector SelfLoc = GetActorLocation();
                 FVector OppLoc = Opponent->GetActorLocation();
 
-                // If **this** fighter is cornered, push the opponent only
+                // If fighter is cornered, push the opponent only
                 bool bSelfCornered =
                     (SelfLoc.X <= StageLeftX + 1.f) ||
                     (SelfLoc.X >= StageRightX - 1.f);
@@ -420,7 +420,6 @@ void AWUT_FighterPawn::HandleState(float DeltaSeconds)
     HandleGroundMovement(DeltaSeconds);
 
     // Try starting moves
-
     // Throw takes priority
     if (bThrowPressed)
     {
@@ -688,9 +687,11 @@ void AWUT_FighterPawn::DrawPushbox() const
 // Start CrMK (Normal)
 void AWUT_FighterPawn::TryStartCrMK()
 {
-    if (!CrMKMove)
+    if (!CrMKMove) 
+    {
         return;
-
+    }
+        
     // Allowed if neutral, walking, or blocking (for blockstring special cancel style)
     if (CurrentState == EFighterState::Neutral ||
         CurrentState == EFighterState::Walking ||
@@ -766,7 +767,6 @@ void AWUT_FighterPawn::TryStartHadoken()
     bInCancelWindow = false;
     bCanCancelOnHit = false;
     bCanCancelOnBlock = false;
-
     isThrowingToWin = false;
 }
 
@@ -774,13 +774,18 @@ void AWUT_FighterPawn::TryStartHadoken()
 // Throw like Footsies: if in range, victim is KO with arc
 void AWUT_FighterPawn::TryStartThrow()
 {
-    if (!ThrowMove) return;
+    if (!ThrowMove) 
+    {
+        return;
+    } 
 
     // Only allowed if neutral/walking/blocking
     if (CurrentState != EFighterState::Neutral &&
         CurrentState != EFighterState::Walking &&
-        CurrentState != EFighterState::Blocking)
+        CurrentState != EFighterState::Blocking) 
+    {
         return;
+    }
 
     // Make it behave like a move
     if (SFX_Throw)
@@ -788,6 +793,7 @@ void AWUT_FighterPawn::TryStartThrow()
         AudioComp->SetSound(SFX_Throw);
         AudioComp->Play();
     }
+
     StartMove(ThrowMove);
     CurrentState = EFighterState::Grab;  // NEW
 
@@ -811,9 +817,6 @@ void AWUT_FighterPawn::EnterBeingThrown(AWUT_FighterPawn* Thrower)
     Sprite->SetFlipbook(BeingThrownFlipbook);
     Sprite->SetLooping(false);
     Sprite->Play();
-
-    UE_LOG(LogTemp, Warning, TEXT("%s is being thrown by %s"),
-        *GetName(), *Thrower->GetName());
 }
 
 void AWUT_FighterPawn::LaunchFromThrow(AWUT_FighterPawn* Thrower)
@@ -832,7 +835,6 @@ void AWUT_FighterPawn::LaunchFromThrow(AWUT_FighterPawn* Thrower)
 }
 
 // --- Cancel/Hit receive ---
-
 void AWUT_FighterPawn::OnHitByMove(AWUT_FighterPawn* Attacker, const UWUT_MoveData* MoveData, bool bWasBlocked, const FVector& HitLocation)
 {
     if (!MoveData || !Attacker)
@@ -933,18 +935,6 @@ void AWUT_FighterPawn::EnterAirborneKO(const FMoveHitProperties& HitProps)
     HorizontalVelocityX = HitProps.KOInitialVelocityX * BackDir;
 
     bKOOnLanding = true;
-
-    UE_LOG(LogTemp, Log, TEXT("%s EnterAirborneKO: VelX=%f VelZ=%f (FacingDir=%d)"),
-        *GetName(), HorizontalVelocityX, VerticalVelocity, FacingDir);
-}
-
-// KO via throw
-void AWUT_FighterPawn::EnterThrownKO(float InitialVelocityZ)
-{
-    /*CurrentState = EFighterState::Thrown;
-    bUseGravity = true;
-    VerticalVelocity = InitialVelocityZ;
-    bKOOnLanding = true;*/
 }
 
 void AWUT_FighterPawn::FinishKO()
@@ -955,18 +945,16 @@ void AWUT_FighterPawn::FinishKO()
         AudioComp->Play();
     }
 
-
     CurrentState = EFighterState::KO;
     bUseGravity = false;
     VerticalVelocity = 0.f;
 
     UE_LOG(LogTemp, Log, TEXT("%s KO'd"), *GetName());
-    // ---- NEW: Tell opponent to enter Win state ----
+    // Tell opponent to enter Win state ----
     if (Opponent && Opponent->CurrentState != EFighterState::KO)
     {
         Opponent->EnterWinState();
     }
-
 }
 
 void AWUT_FighterPawn::EnterWinState() 
@@ -977,8 +965,6 @@ void AWUT_FighterPawn::EnterWinState()
         AudioComp->Play();
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("%s WON THE ROUND!"), *GetName());
-
     if (isThrowingToWin)
     {
         CurrentState = EFighterState::PerfectWin;
@@ -988,8 +974,6 @@ void AWUT_FighterPawn::EnterWinState()
         CurrentState = EFighterState::Win;
     }
     
-
-
     bUseGravity = false;
     VerticalVelocity = 0.f;
     HorizontalVelocityX = 0.f;
@@ -1002,20 +986,25 @@ void AWUT_FighterPawn::ReturnToNeutral()
 }
 
 // --- Blocking / hurtbox / active hitboxes ---
-
 bool AWUT_FighterPawn::IsHoldingBack() const
 {
-    if (!Opponent)
+    if (!Opponent) 
+    {
         return false;
-
+    }
+        
     float DiffX = Opponent->GetActorLocation().X - GetActorLocation().X;
     int32 LocalFacing = (DiffX >= 0.f) ? 1 : -1;
 
     // If opponent to the right, back = negative input
-    if (LocalFacing == 1)
+    if (LocalFacing == 1) 
+    {
         return InputX < -0.2f;
-    else
+    }
+    else 
+    {
         return InputX > 0.2f;
+    }
 }
 
 void AWUT_FighterPawn::GetHurtbox(FActiveHitbox& OutBox) const
@@ -1074,11 +1063,16 @@ bool AWUT_FighterPawn::GetActiveHitboxes(TArray<FActiveHitbox>& OutHitboxes, con
     OutHitboxes.Reset();
     OutMove = nullptr;
 
-    if (!CurrentMove)
+    if (!CurrentMove) 
+    {
         return false;
+    }
+        
 
-    if (!IsMoveActiveFrame(CurrentMove, CurrentMoveFrame))
+    if (!IsMoveActiveFrame(CurrentMove, CurrentMoveFrame)) 
+    {
         return false;
+    }
 
     // Build world-space AABBs for each local hitbox
     FVector Loc = GetActorLocation();

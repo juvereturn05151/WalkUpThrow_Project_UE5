@@ -6,9 +6,6 @@
 #include "Blueprint/UserWidget.h"
 #include "WUT_HealthUI.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class WALKUPTHROWCPP_API UWUT_HealthUI : public UUserWidget
 {

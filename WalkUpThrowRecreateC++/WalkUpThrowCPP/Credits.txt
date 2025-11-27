@@ -1,0 +1,12 @@
+Developer: Ju-ve Chamkasemporn
+
+Engine:
+Unreal Engine
+
+Arts: 
+Character: Napat Shinamwatra
+Background: Aratchaporn Ph
+
+Sounds: 
+BGM: Bass Buzzer [GuhNf8k1-tc]
+Sfx: Kenney Fighting Game Package

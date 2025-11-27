@@ -1,4 +1,4 @@
-// WUT_GameplayGameMode.cpp
+// (c) 2025 MyLoyalFans. All rights reserved.
 
 #include "AWUT_GameplayGameMode.h"
 #include "WUT_FighterPawn.h"

@@ -1,3 +1,4 @@
+// (c) 2025 MyLoyalFans. All rights reserved.
 #include "AWUT_MenuGameMode.h"
 #include "WUT_InputManager.h"
 #include "EngineUtils.h"
