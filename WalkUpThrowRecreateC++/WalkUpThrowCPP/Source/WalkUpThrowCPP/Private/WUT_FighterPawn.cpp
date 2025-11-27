@@ -221,19 +221,40 @@ void AWUT_FighterPawn::ReadPadInput()
         if (Result != ERROR_SUCCESS)
             return;
 
-        // Movement
+        // ----------------------------------------------
+        // LEFT STICK MOVEMENT
+        // ----------------------------------------------
         const float LX = State.Gamepad.sThumbLX / 32767.f;
         if (FMath::Abs(LX) > 0.2f)
-            InputX = LX;
+        {
+            InputX = LX;   // Analog movement
+        }
 
+        // ----------------------------------------------
+        // D-PAD MOVEMENT
+        // ----------------------------------------------
+        const bool DPadLeft = (State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) != 0;
+        const bool DPadRight = (State.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) != 0;
+
+        // Note: D-pad is digital, so overwrite analog if pressed
+        if (DPadLeft)
+            InputX = -1.0f;
+        else if (DPadRight)
+            InputX = 1.0f;
+
+        // ----------------------------------------------
+        // ACTION BUTTONS
+        // ----------------------------------------------
         bool bAtkNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_A) != 0;
         bool bThrowNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_Y) != 0;
         bool bStartNow = (State.Gamepad.wButtons & XINPUT_GAMEPAD_START) != 0;
 
+        // Edge detection (Pressed this frame)
         bCrMKPressed = bAtkNow && !bCrMKDownPrev;
         bThrowPressed = bThrowNow && !bThrowDownPrev;
         bStartPressed = bStartNow && !bStartDownPrev;
 
+        // Store previous frame states
         bCrMKDownPrev = bAtkNow;
         bThrowDownPrev = bThrowNow;
         bStartDownPrev = bStartNow;
